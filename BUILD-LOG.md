@@ -13,6 +13,9 @@ This file is append-only. Do not rewrite or trim history — add new entries at 
   - `Marlin/Configuration.h`
   - `Marlin/Configuration_adv.h`
 - [2026-09-17] Diffed all three against the stock 2.1.2.8 versions to verify every change matches brief section 5. Result: **full match, no unexplained changes**. Details below under "Changes I made" (these are the user's pre-existing edits, not edits I made this session, but logging them here satisfies the brief's requirement to confirm section 5 before doing anything else).
+- [2026-09-17] Committed the baseline tree (commit `57df68b`).
+- [2026-09-17] Installed PlatformIO 6.2.0 via pip (not previously present in this environment).
+- [2026-09-17] Ran `pio run -e STM32G0B1RE_btt`. **Build blocked, not a code error** — see "Open questions" below. This is an environment/infra issue, not a firmware bug, so per brief Rule 1 no config or source file was touched in response to it.
 
 ## Changes I made
 (This session did not need to change any of the settings covered by brief sections 5–7. The following entries record the pre-existing customizations found in the three uploaded files, verified against the brief, not new edits.)
@@ -51,7 +54,11 @@ No settings from brief §6 ("Do Not Enable") were found enabled: confirmed absen
 
 ## Open questions for the user
 
-(none yet — will be populated if the build surfaces a genuine hardware-mismatch question per brief §10)
+QUESTION [1]
+What I need to know:      This sandbox session's outbound network policy blocks `api.registry.platformio.org`, `api.registry.nm1.platformio.org`, and `collector.platformio.org` (confirmed via the proxy status endpoint: each returns HTTP 403, "policy denial"). PlatformIO needs the first two to download the `ststm32` platform, the STM32G0 Arduino framework, and the ARM GCC toolchain — none of that is present locally and there is no code-only substitute.
+Why it matters:           The firmware cannot be compiled at all until these downloads succeed. This blocks Phase 2/3/4 of the brief entirely — it is not a config or source problem, so I have not touched any file in response to it (see brief Rule 1).
+How it could be answered: Either (a) allow the three hosts above in this Claude Code environment's network egress policy and re-run the build in a new session, or (b) build locally instead, following the "Deliver" instructions I've prepared below once you tell me which route you prefer.
+Who can answer:           [user, via environment settings] — this is an infrastructure/environment setting, not a hardware or design-history question. See https://code.claude.com/docs/en/claude-code-on-the-web for how environment network policy is configured.
 
 ## Things I confirmed but did NOT change
 
