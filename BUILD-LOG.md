@@ -60,6 +60,8 @@ Why it matters:           The firmware cannot be compiled at all until these dow
 How it could be answered: Either (a) allow the three hosts above in this Claude Code environment's network egress policy and re-run the build in a new session, or (b) build locally instead, following the "Deliver" instructions I've prepared below once you tell me which route you prefer.
 Who can answer:           [user, via environment settings] — this is an infrastructure/environment setting, not a hardware or design-history question. See https://code.claude.com/docs/en/claude-code-on-the-web for how environment network policy is configured.
 
+**Update [2026-09-17, later same session]:** User reported allowlisting `api.registry.platformio.org`, `api.registry.nm1.platformio.org`, `dl.registry.platformio.org`, `dl.registry.nm1.platformio.org`, `registry.platformio.org`. Re-ran `pio run -e STM32G0B1RE_btt` in this same session: **still blocked**, identical 403 from the egress proxy on `api.registry.platformio.org` and `api.registry.nm1.platformio.org` (plus `collector.platformio.org`, PlatformIO's telemetry endpoint — harmless if left blocked). Confirmed via the proxy's own status endpoint, not just the pio error text. This session's proxy evidently has not picked up the policy change — network policy is a property of the environment and this running session was likely started before the change was saved, so it is still enforcing the old policy. Have NOT claimed success; told the user directly. Waiting on either a fresh session against this environment, or confirmation the setting actually persisted.
+
 ## Things I confirmed but did NOT change
 
 - `Z_MIN_PROBE_PIN` override (pins file + Configuration.h) — intentional per §5.1/§5.2.
