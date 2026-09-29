@@ -22,7 +22,7 @@ Three roles in this project:
 
 The single biggest risk here is not a hard bug. It is you forgetting, 40 minutes in, that the probe pin override was deliberate, "fixing" it, and producing firmware that compiles perfectly and drives the nozzle into the bed.
 
-**Maintain a file called `BUILD-LOG.md` in the project root.** Create it on your first action. Append to it continuously — never rewrite or trim it. Structure:
+**Maintain a file called `docs/BUILD-LOG.md`.** Create it on your first action. Append to it continuously — never rewrite or trim it. Structure:
 
 ```markdown
 ## Session log
@@ -40,9 +40,9 @@ The single biggest risk here is not a hard bug. It is you forgetting, 40 minutes
 
 Rules:
 1. **Before editing any file**, check this brief's sections 5 and 6. If the setting appears there, do not change it — log it under "confirmed but did not change" instead.
-2. **After every edit**, append to `BUILD-LOG.md` immediately. Do not batch this.
-3. **If your context is compacted or you feel uncertain about earlier decisions**, stop, re-read this brief and `BUILD-LOG.md`, and say so out loud to the user before continuing.
-4. **This file and `BUILD-LOG.md` outrank your memory.** If your recollection conflicts with them, they are right.
+2. **After every edit**, append to `docs/BUILD-LOG.md` immediately. Do not batch this.
+3. **If your context is compacted or you feel uncertain about earlier decisions**, stop, re-read this brief and `docs/BUILD-LOG.md`, and say so out loud to the user before continuing.
+4. **This file and `docs/BUILD-LOG.md` outrank your memory.** If your recollection conflicts with them, they are right.
 5. Never make a change because it "seems cleaner." Only fix things that actually break the build or that the user asks for.
 
 ---
@@ -231,7 +231,7 @@ If a compile error would be resolved by changing something in sections 5 or 7, t
 
 ### Phase 1 — Orient
 1. Read this brief fully.
-2. Create `BUILD-LOG.md`.
+2. Create `docs/BUILD-LOG.md`.
 3. Read the three modified files and confirm they match section 5. Report any discrepancy **without fixing it**.
 
 ### Phase 2 — Build
@@ -257,7 +257,7 @@ If a compile error would be resolved by changing something in sections 5 or 7, t
 
 **You cannot query ChatGPT or any other assistant directly.** You have no connection to them. What you can do is write a precise question for the user to relay.
 
-Put such questions in `BUILD-LOG.md` under "Open questions for the user," and also state them in chat. Format each as:
+Put such questions in `docs/BUILD-LOG.md` under "Open questions for the user," and also state them in chat. Format each as:
 
 ```
 QUESTION [n]

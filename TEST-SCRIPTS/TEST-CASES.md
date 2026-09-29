@@ -5,13 +5,13 @@ Permanent, reusable procedures. No pass/fail lives in this file — see
 test case, append it at the end of its group (don't renumber existing ones —
 old run files reference these IDs).
 
-Each test case cites the `MASTER-BRIEF-FOR-CLAUDE-CODE.md` section it's
+Each test case cites the `docs/MASTER-BRIEF-FOR-CLAUDE-CODE.md` section it's
 grounded in, where applicable, so the *reason* a test exists stays attached to it.
 
 **Probe wiring confirmed 2026-09-29:** the user's own hand-annotated schematic
 traces the Z probe to E0-STOP (PC15), matching this firmware, and separately
-marks the Z-STOP breakout pins "Not Used." See `HARDWARE-WIRING.md` and
-`BUILD-LOG.md` Question 2 (resolved). TC-009 and everything gated behind it
+marks the Z-STOP breakout pins "Not Used." See `docs/HARDWARE-WIRING.md` and
+`docs/BUILD-LOG.md` Question 2 (resolved). TC-009 and everything gated behind it
 are clear to run.
 
 ---

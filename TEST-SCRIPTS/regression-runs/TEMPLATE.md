@@ -55,7 +55,7 @@ Send `M906`.
 Expected: Z reads ~1000mA (doubled for the parallel Z motors), others plausible.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-## D. Endstops & Probe (probe confirmed on E0-STOP — see HARDWARE-WIRING.md)
+## D. Endstops & Probe (probe confirmed on E0-STOP — see docs/HARDWARE-WIRING.md)
 
 **TC-007 — X endstop logic**
 `M119`, note `x_min`. Press X endstop by hand, `M119` again.

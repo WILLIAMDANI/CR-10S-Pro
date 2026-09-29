@@ -2,7 +2,7 @@
 
 Source of truth: the user's own hand-annotated wiring schematic (photos of the
 actual build, each wire traced and labeled), confirmed 2026-09-29. This
-resolved `BUILD-LOG.md` Question 2 — see that entry for the full story.
+resolved `docs/BUILD-LOG.md` Question 2 — see that entry for the full story.
 
 | Component | SKR Mini E3 V3.0 connection |
 |---|---|
@@ -26,10 +26,10 @@ resolved `BUILD-LOG.md` Question 2 — see that entry for the full story.
 
 **Z-STOP (PC2) is confirmed physically unused** — the schematic explicitly
 marks the breakout pins that would carry it as "Not Used." This matches
-`MASTER-BRIEF-FOR-CLAUDE-CODE.md` §2/§3: there is no Z endstop switch on this
+`docs/MASTER-BRIEF-FOR-CLAUDE-CODE.md` §2/§3: there is no Z endstop switch on this
 machine; Z homes entirely off the probe on E0-STOP.
 
 This table matches the firmware as configured — no pin changes were made as a
 result of this schematic. It documents wiring only, not firmware settings;
-see `MASTER-BRIEF-FOR-CLAUDE-CODE.md` §5 for what the firmware itself does
+see `docs/MASTER-BRIEF-FOR-CLAUDE-CODE.md` §5 for what the firmware itself does
 and why.
