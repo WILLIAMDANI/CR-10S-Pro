@@ -85,81 +85,94 @@ Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 Expected: only FAN0 spins.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-## E. Homing & Leveling (needs B, C above all PASS)
+## E. Heaters
+*(Typing these commands is the same thing as pressing the TFT's preheat buttons — same command gets sent either way. You can do these in the same heating cycle as TC-011 above, no need to heat twice.)*
 
-**TC-014 — XY homing**
+**TC-014 — Hotend heats to target**
+Send `M104 S200`. Watch with `M105` or the TFT.
+Expected: climbs steadily to ~200°C and holds within a few degrees, no error.
+Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
+
+**TC-015 — Bed heats to target**
+Send `M140 S60`. Watch with `M105` or the TFT.
+Expected: climbs steadily to ~60°C and holds within a few degrees, no error.
+Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
+
+## F. Homing & Leveling (needs B, C above all PASS)
+
+**TC-016 — XY homing**
 `G28 X Y`.
 Expected: completes cleanly, no grinding at endstops.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-**TC-015 — Full homing (Z via probe)** ⚠️ hand near power switch
+**TC-017 — Full homing (Z via probe)** ⚠️ hand near power switch
 Full `G28`.
 Expected: Z homes via probe, no collision.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-**TC-016 — Bed mesh sanity**
+**TC-018 — Bed mesh sanity**
 `G29`, look at the 5×5 values.
 Expected: smooth plausible surface, no wild outlier or all-zero mesh. Pass → `M500`.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-## F. Calibration
+## G. Calibration
 
-**TC-017 — Probe X/Y offset**
+**TC-019 — Probe X/Y offset**
 Measure probe-to-nozzle X/Y with calipers → `M851 X__ Y__` → `M500`.
 Expected: matches physical measurement.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-**TC-018 — Probe Z offset (paper test)**
+**TC-020 — Probe Z offset (paper test)**
 Paper-drag test at bed center → `M851 Z-__` → `M500`.
 Expected: slight drag, no gouge, no gap.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-**TC-019 — E-steps calibration**
+**TC-021 — E-steps calibration**
 Mark 120mm filament, extrude 100mm commanded, measure actual. `new = 140 × 100 ÷ actual` → `M92 E__` → `M500`.
 Expected: stable/repeatable within ~1–2% across 2–3 runs.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-## G. Thermal Safety
+## H. Temperature Safety
 
-**TC-020 — Hotend PID autotune**
+**TC-022 — Hotend PID autotune**
 `M303 E0 S200 C8 U1` → `M500`.
 Expected: completes, no "failed" message, holds temp with low oscillation.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-**TC-021 — Bed PID autotune**
+**TC-023 — Bed PID autotune**
 `M303 E-1 S60 C8 U1` → `M500`.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-**TC-022 — Thermal runaway protection** ⚠️ do under supervision
+**TC-024 — Thermal runaway protection** ⚠️ do under supervision
 While hotend heating, briefly unplug its thermistor connector, reconnect.
 Expected: Marlin halts heater, reports thermal error. (Fail = heater kept driving blind — highest severity, fire-safety.)
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-**TC-023 — MINTEMP/MAXTEMP enforcement**
+**TC-025 — MINTEMP/MAXTEMP enforcement**
 `M104 S300` (above 275 max).
 Expected: firmware refuses/clamps, doesn't drive to unsafe setpoint.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-## H. EEPROM Persistence
+## I. EEPROM Persistence
 
-**TC-024 — Settings survive cold power cycle**
-After TC-017–021 saved, power off 30s, power on, check values (`M503` or re-check offsets/E-steps/PID).
+**TC-026 — Settings survive cold power cycle**
+After TC-019–023 saved, power off 30s, power on, check values (`M503` or re-check offsets/E-steps/PID).
 Expected: all values match what was saved.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-**TC-025 — Factory reset**
+**TC-027 — Factory reset**
 `M502` → `M500`.
 Expected: returns to compiled defaults cleanly, no corruption/hang.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-## I. First Print
+## J. First Print
 
-**TC-026 — First-layer quality with babystepping**
+**TC-028 — First-layer quality with babystepping**
 Start calibration print, watch layer one live.
 Expected: even squish across the bed, no gaps.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-**TC-027 — Sustained print, no heat-creep jam**
+**TC-029 — Sustained print, no heat-creep jam**
 Run 30–60 min continuous print.
 Expected: no jams, no under-extrusion developing.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________

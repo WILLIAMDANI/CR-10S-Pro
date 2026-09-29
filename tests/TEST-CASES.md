@@ -100,92 +100,117 @@ Same pattern for `+Y`. **Fail →** flip `INVERT_Y_DIR`.
 
 ---
 
-## E. Homing & Leveling
+## E. Heaters
 
-### TC-014 — XY homing
+Run these using typed commands, not the TFT screen's preheat buttons. A typed
+command (`M104`/`M140`) is exactly what those buttons send internally — same
+result — but typing it directly isolates the firmware/hardware from the TFT.
+If a typed command works but the TFT button doesn't, the problem is in the
+TFT's own configuration, not this firmware. You can run these in the same
+physical heating cycle you use for TC-011 (FAN1 auto-on) — no need to heat twice.
+
+### TC-014 — Hotend heats to target temperature
+**Area:** Heaters | **Priority:** Critical
+**Procedure:** Send `M104 S200`. Watch temperature with `M105` (or the TFT display) as it climbs.
+**Expected Result:** Temperature climbs steadily toward 200°C and holds within a few degrees, no error, no thermal shutdown.
+**Pass Criteria:** Reaches and holds target. **Fail Criteria:** Doesn't climb, climbs but won't hold near target, or firmware reports a thermal error.
+**Brief ref:** §5.2 `TEMP_SENSOR_0`, `HEATER_0_MAXTEMP`.
+
+### TC-015 — Bed heats to target temperature
+**Area:** Heaters | **Priority:** Critical
+**Procedure:** Send `M140 S60`. Watch temperature with `M105`/TFT as it climbs.
+**Expected Result:** Temperature climbs steadily toward 60°C and holds within a few degrees.
+**Pass Criteria:** Reaches and holds target. **Fail Criteria:** Doesn't climb, won't hold, or firmware reports a thermal error.
+**Brief ref:** §5.2 `TEMP_SENSOR_BED`, `BED_MAXTEMP`.
+
+---
+
+## F. Homing & Leveling
+
+### TC-016 — XY homing
 **Priority:** Critical | **Preconditions:** TC-004, TC-005, TC-007, TC-008 all PASS.
 **Procedure:** `G28 X Y`. **Expected:** Completes cleanly, no grinding/skipped steps at the endstops.
 
-### TC-015 — Full homing (Z via probe)
-**Priority:** Critical | **Preconditions:** TC-006, TC-009, TC-014 all PASS. Hand near power switch.
+### TC-017 — Full homing (Z via probe)
+**Priority:** Critical | **Preconditions:** TC-006, TC-009, TC-016 all PASS. Hand near power switch.
 **Procedure:** Full `G28`. **Expected:** Z homes using the probe (per `USE_PROBE_FOR_Z_HOMING`), `Z_SAFE_HOMING` keeps the probe over the bed throughout, no collision.
 **Brief ref:** §5.2, §2 (no Z endstop switch exists — probe-only Z homing).
 
-### TC-016 — Bed mesh sanity
-**Priority:** High | **Preconditions:** TC-015 PASS. **Procedure:** `G29`, inspect the 5×5 mesh values.
+### TC-018 — Bed mesh sanity
+**Priority:** High | **Preconditions:** TC-017 PASS. **Procedure:** `G29`, inspect the 5×5 mesh values.
 **Expected:** Values form a smooth, plausible surface (no single wild outlier point, no all-zero mesh). **Pass →** `M500`.
 **Brief ref:** §5.2 `GRID_MAX_POINTS_X 5`, `EXTRAPOLATE_BEYOND_GRID`.
 
 ---
 
-## F. Probe Offset & Calibration
+## G. Probe Offset & Calibration
 
-### TC-017 — Probe X/Y offset
+### TC-019 — Probe X/Y offset
 **Procedure:** Measure probe-to-nozzle X/Y distance with calipers. `M851 X__ Y__`, `M500`.
 **Expected:** Matches physical measurement (starting config value `{-27, 0, 0}` is an estimate, not measured — expect to correct it here).
 **Brief ref:** §7 (flagged unverified magnitude).
 
-### TC-018 — Probe Z offset (paper test)
+### TC-020 — Probe Z offset (paper test)
 **Procedure:** Standard paper-drag first-layer test at bed center. `M851 Z-__`, `M500`.
 **Expected:** Slight drag on the paper, no gouging, no visible gap.
 
-### TC-019 — E-steps calibration
+### TC-021 — E-steps calibration
 **Procedure:** Mark 120mm of filament above the extruder gear, command 100mm extrusion, measure filament actually consumed. `new = old(140) × 100 ÷ actual`. `M92 E<new>`, `M500`.
 **Expected:** New value is stable and repeatable across 2–3 runs (within ~1–2%).
 **Brief ref:** §7, §13.4 (previous bad guess of 415 corrected to 140 — still uncalibrated until this test runs).
 
 ---
 
-## G. Temperature Control & Safety
+## H. Temperature Safety
 
-### TC-020 — Hotend PID autotune
+### TC-022 — Hotend PID autotune
 **Procedure:** `M303 E0 S200 C8 U1`, then `M500`.
 **Expected:** Completes without a "PID Autotune failed" message; hotend holds target temp with acceptably low oscillation afterward.
 
-### TC-021 — Bed PID autotune
+### TC-023 — Bed PID autotune
 Same pattern: `M303 E-1 S60 C8 U1`, `M500`.
 
-### TC-022 — Thermal runaway protection (**do under supervision**)
+### TC-024 — Thermal runaway protection (**do under supervision**)
 **Priority:** Critical, safety
 **Procedure:** While hotend is heating toward a target, briefly unplug the hotend thermistor connector, then reconnect.
 **Expected:** Marlin halts the heater and reports a thermal error (`THERMAL RUNAWAY` or `HEATING FAILED`) rather than continuing to heat blind.
 **Fail Criteria:** Heater keeps driving with no sensor feedback — this is a fire-safety-relevant failure, treat as highest severity.
 **Brief ref:** §5.2 `THERMAL_PROTECTION_HOTENDS`/`THERMAL_PROTECTION_BED` (stock Marlin defaults, not customized, but worth verifying on this specific hardware).
 
-### TC-023 — MINTEMP/MAXTEMP enforcement
+### TC-025 — MINTEMP/MAXTEMP enforcement
 **Procedure:** Attempt `M104 S300` (above `HEATER_0_MAXTEMP 275`).
 **Expected:** Firmware refuses/clamps rather than driving the heater to an unsafe setpoint.
 
 ---
 
-## H. EEPROM / Configuration Persistence
+## I. EEPROM / Configuration Persistence
 
-### TC-024 — Settings survive a cold power cycle
-**Priority:** High | **Procedure:** After TC-017–TC-021 are saved with `M500`, fully power off for 30 seconds, power back on, `M503` or re-check the relevant values (probe offset, E-steps, PID).
+### TC-026 — Settings survive a cold power cycle
+**Priority:** High | **Procedure:** After TC-019–TC-023 are saved with `M500`, fully power off for 30 seconds, power back on, `M503` or re-check the relevant values (probe offset, E-steps, PID).
 **Expected:** All values match what was saved — nothing reverts to compiled defaults.
 **Brief ref:** §5.2 `EEPROM_SETTINGS`, `EEPROM_AUTO_INIT`.
 
-### TC-025 — Factory reset
+### TC-027 — Factory reset
 **Procedure:** `M502` then `M500`.
 **Expected:** Values return to the compiled-in defaults from `Configuration.h`/`Configuration_adv.h`, cleanly, no corruption or hang.
 **Brief ref:** §11 Step 1 (this is literally the first commissioning step, done right after every flash).
 
 ---
 
-## I. First Print
+## J. First Print
 
-### TC-026 — First-layer quality with babystepping
+### TC-028 — First-layer quality with babystepping
 **Procedure:** Start a simple calibration print, watch layer one live with babystepping ready.
 **Expected:** Even first-layer squish across the bed, no gaps despite `Z_MIN_PROBE_PIN`/offset being freshly calibrated rather than production-tested.
 **Brief ref:** §5.3 `BABYSTEPPING`/`BABYSTEP_ZPROBE_OFFSET`, §11 Step 11.
 
-### TC-027 — Sustained print, no heat-creep jam
+### TC-029 — Sustained print, no heat-creep jam
 **Procedure:** Run a print of at least 30–60 minutes continuous extrusion.
 **Expected:** No jams, no under-extrusion developing over time (the failure mode TC-011 exists specifically to prevent).
 
 ---
 
-## J. Regression
+## K. Regression
 
 Empty at project start. **Every bug found and fixed gets a test case added here**,
 so it has a permanent, repeatable check that it doesn't silently return in a
