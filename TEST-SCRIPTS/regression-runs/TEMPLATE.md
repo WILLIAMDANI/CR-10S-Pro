@@ -12,10 +12,6 @@ Delete this comment block in the copy. Fill in every ⬜ Result line as you go
 
 Mark each result: **PASS / FAIL / BLOCKED / NOT RUN**. Any FAIL or BLOCKED → open a GitHub Issue, put the number in Notes.
 
-⚠️ **Before TC-009 and everything in groups I/J/K:** the Z probe's physical
-terminal (E0-STOP vs Z-STOP) is unconfirmed — see `TEST-CASES.md` header and
-`BUILD-LOG.md` Question 2. Don't home/probe until that's settled.
-
 ---
 
 ## A. Boot
@@ -33,6 +29,11 @@ Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 **TC-003 — TFT35 connects to mainboard**
 Power on with TFT attached.
 Expected: TFT reaches normal status screen, temps update live. (Note: TFT's buzzer is its own firmware, not Marlin `M300` — not wired here, no test for it.)
+Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
+
+**TC-039 — TFT touch, encoder, and button all respond**
+Tap touchscreen, turn encoder, press encoder button.
+Expected: each does something on screen.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
 ## B. Emergency Stop
@@ -54,7 +55,7 @@ Send `M906`.
 Expected: Z reads ~1000mA (doubled for the parallel Z motors), others plausible.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-## D. Endstops & Probe
+## D. Endstops & Probe (probe confirmed on E0-STOP — see HARDWARE-WIRING.md)
 
 **TC-007 — X endstop logic**
 `M119`, note `x_min`. Press X endstop by hand, `M119` again.
@@ -65,7 +66,7 @@ Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 Same as TC-007 for `y_min`.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-**TC-009 — Z probe trigger logic** ⚠️ see wiring warning above
+**TC-009 — Z probe trigger logic**
 `M119` with probe clear, note `z_probe`. Hold metal (must be metal — inductive sensor) to probe face, `M119` again.
 Expected: `open` clear → `TRIGGERED` with metal present. No response at all → STOP, do not proceed to homing.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
@@ -133,7 +134,7 @@ Hotend below 170°C, attempt `G1 E10 F60`.
 Expected: firmware refuses, motor doesn't turn.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
-## I. Homing & Leveling ⚠️ confirm probe wiring first (see top)
+## I. Homing & Leveling
 
 **TC-021 — XY homing**
 `G28 X Y`.
@@ -177,6 +178,11 @@ Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 **TC-028 — X/Y/Z travel accuracy**
 Command 100mm X, then Y (10mm for Z), measure actual travel.
 Expected: within ~1% of commanded on all axes.
+Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
+
+**TC-038 — Probe repeatability**
+`M48 P10 V2` (probes same point 10x, reports mean/deviation).
+Expected: low deviation, all 10 trigger successfully.
 Result: ⬜ PASS ⬜ FAIL ⬜ BLOCKED ⬜ NOT RUN — Notes/Issue#: __________
 
 ## L. Temperature Safety — requires TC-019 PASS first

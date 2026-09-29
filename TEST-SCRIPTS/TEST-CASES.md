@@ -8,12 +8,11 @@ old run files reference these IDs).
 Each test case cites the `MASTER-BRIEF-FOR-CLAUDE-CODE.md` section it's
 grounded in, where applicable, so the *reason* a test exists stays attached to it.
 
-**⚠️ OPEN QUESTION blocking the probe/homing tests below (D, I, J, K):**
-the Z probe's physical terminal is unconfirmed. The original brief and this
-firmware both say E0-STOP (PC15). A hand-drawn wiring schematic reviewed
-2026-09-29 says Z-STOP. These can't both be right — verify by tracing the
-actual wire before running TC-009, TC-021–023, or TC-024–027. See
-`BUILD-LOG.md` Question 2.
+**Probe wiring confirmed 2026-09-29:** the user's own hand-annotated schematic
+traces the Z probe to E0-STOP (PC15), matching this firmware, and separately
+marks the Z-STOP breakout pins "Not Used." See `HARDWARE-WIRING.md` and
+`BUILD-LOG.md` Question 2 (resolved). TC-009 and everything gated behind it
+are clear to run.
 
 ---
 
@@ -45,6 +44,12 @@ actual wire before running TC-009, TC-021–023, or TC-024–027. See
 **Note:** The TFT35's speaker/buzzer is driven by the TFT's own onboard firmware, not by Marlin's `M300` — no `BEEPER_PIN` is wired here (no EXP1 cable used, per brief §5.2/§6). Don't expect `M300` to produce sound; that's not a defect, it's how this build is wired.
 **Brief ref:** §5.2 (`SERIAL_PORT 2`), §6 (no native display driver used — TFT is a serial host).
 
+### TC-039 — TFT touch, encoder, and button all respond
+**Area:** Boot | **Priority:** Medium
+**Procedure:** Tap the touchscreen, turn the rotary encoder, press the encoder button.
+**Expected Result:** Each produces the expected on-screen effect (menu navigation, selection). A working screen doesn't by itself prove the underlying output is mapped correctly (see TC-017/018 for that) — this only confirms the TFT hardware itself is alive.
+**Fail Criteria:** Any control unresponsive.
+
 ---
 
 ## B. Emergency Stop
@@ -75,8 +80,6 @@ actual wire before running TC-009, TC-021–023, or TC-024–027. See
 ---
 
 ## D. Endstops & Probe Logic
-
-⚠️ See the open wiring question at the top of this file before TC-009.
 
 ### TC-007 — X endstop logic
 **Area:** Endstops | **Priority:** Critical
@@ -181,8 +184,6 @@ physical heating cycle you use for TC-014 (FAN1 auto-on) — no need to heat twi
 
 ## I. Homing & Leveling
 
-⚠️ Confirm the probe wiring question (top of file) before TC-022.
-
 ### TC-021 — XY homing
 **Priority:** Critical | **Preconditions:** TC-007, TC-008, TC-010, TC-011 all PASS.
 **Procedure:** `G28 X Y`. **Expected:** Completes cleanly, no grinding/skipped steps at the endstops.
@@ -211,7 +212,7 @@ physical heating cycle you use for TC-014 (FAN1 auto-on) — no need to heat twi
 
 ## K. Probe Offset & Calibration
 
-⚠️ Requires the wiring question resolved and TC-022/023 passing first.
+Requires TC-022/023 passing first.
 
 ### TC-025 — Probe X/Y offset
 **Procedure:** Measure probe-to-nozzle X/Y distance with calipers. `M851 X__ Y__`, `M500`.
@@ -231,6 +232,12 @@ physical heating cycle you use for TC-014 (FAN1 auto-on) — no need to heat twi
 **Priority:** Medium | **Procedure:** Command a 100mm move on X, then Y, physically measure actual travel with a tape measure/calipers. Repeat with a 10mm Z move (harder to measure precisely — best effort).
 **Expected:** Measured travel within ~1% of commanded, on all three axes. Confirms steps/mm (80/80/400) are actually correct for this hardware, independent of the E-steps test above.
 **Fail Criteria:** Consistent error beyond ~1–2% — steps/mm may need adjusting, or something is slipping.
+
+### TC-038 — Probe repeatability
+**Priority:** Medium | **Preconditions:** TC-022 PASS (homed). **Procedure:** `M48 P10 V2` — probes the same point 10 times and reports mean/deviation.
+**Expected:** Low standard deviation (inductive sensors are usually very consistent — large scatter suggests a mounting, wiring, or interference problem).
+**Fail Criteria:** High deviation, or any of the 10 probes fails to trigger.
+**Brief ref:** §7 — this is the objective check behind whether the probe is actually reliable enough to trust for `G29`.
 
 ---
 
