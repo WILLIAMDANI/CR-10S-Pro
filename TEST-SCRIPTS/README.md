@@ -4,6 +4,17 @@ This directory is the test-management system for this firmware, sized for how th
 project actually works: one tester, one physical printer, firmware built by hand
 from a specific git commit rather than on a release train.
 
+## Reporting results back to Claude
+
+For any test you run on the printer, copy the block from
+`RESULT-ENTRY-TEMPLATE.md`, fill it in, and paste it directly into chat — one
+per test, or several in one message. The important part is **exact printer
+output** (the actual `M119`/`M105`/etc. text), not a summary in your own
+words — that's what makes a failure diagnosable instead of a guessing game.
+For a full end-to-end run across every test case, use
+`regression-runs/TEMPLATE.md` instead (see "Workflow" below) and report the
+whole filled-in file back the same way.
+
 ## The model (same one used by Jira test-management tools like Xray/Zephyr)
 
 Three things, kept separate on purpose:
