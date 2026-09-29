@@ -8,12 +8,16 @@ from a specific git commit rather than on a release train.
 
 Three things, kept separate on purpose:
 
-1. **Test Case** (`TEST-CASES.md`) — a permanent, reusable procedure. It never
-   contains a pass/fail result. The same test case gets run again on every future
-   build.
-2. **Regression Run** (`regression-runs/<date>-<git-short-sha>.md`) — one full
-   pass through the test case list, against one specific firmware build. This is
-   where PASS / FAIL / BLOCKED / NOT RUN actually live.
+1. **Test Case** (`TEST-CASES.md`) — the master copy of each procedure, with full
+   detail and the reasoning behind it. Edit this when a procedure itself changes.
+   It never contains a pass/fail result.
+2. **Regression Run** (`regression-runs/<date>-<git-short-sha>.md`) — a
+   **self-contained checklist**: the steps and expected result are copied inline
+   for every test, so you fill it out top-to-bottom on your phone at the printer
+   without flipping back to `TEST-CASES.md`. This is where PASS / FAIL / BLOCKED /
+   NOT RUN actually live. If a run's inlined text and `TEST-CASES.md` ever
+   disagree, `TEST-CASES.md` is the source of truth — update the next run's copy
+   from it.
 3. **Bug** — opened only when a test fails. Tracked as a **GitHub Issue** in this
    repo (not a separate system), so it's permanently linked to the exact commit
    that was being tested and the exact commit that later fixes it.
