@@ -1148,7 +1148,7 @@
 #define U_MAX_ENDSTOP_INVERTING false // Set to true to invert the logic of the endstop.
 #define V_MAX_ENDSTOP_INVERTING false // Set to true to invert the logic of the endstop.
 #define W_MAX_ENDSTOP_INVERTING false // Set to true to invert the logic of the endstop.
-#define Z_MIN_PROBE_ENDSTOP_INVERTING true // NPN normally-open inductive probe (SZC-M18-8DN): idle=HIGH, triggered=LOW. VERIFY with M119 after first flash -- if it reads "open" when a metal object is under the sensor, flip this to false.
+#define Z_MIN_PROBE_ENDSTOP_INVERTING false // Flipped 2026-10-04: physical test showed probe logic backwards (confirmed by user) -- was true.
 
 // Enable this feature if all enabled endstop pins are interrupt-capable.
 // This will remove the need to poll the interrupt pins, saving many CPU cycles.
@@ -1670,9 +1670,9 @@
 // @section motion
 
 // Invert the stepper direction. Change (or reverse the motor connector) if an axis goes the wrong way.
-#define INVERT_X_DIR true // STARTING GUESS -- verify: jog a small +X move, X must physically move toward increasing X. Flip if backwards.
+#define INVERT_X_DIR true // Confirmed 2026-10-03: +X jog moves away from the X endstop, as expected.
 #define INVERT_Y_DIR true
-#define INVERT_Z_DIR false
+#define INVERT_Z_DIR true // Flipped 2026-10-04: physical test showed Z homing drove the wrong way (confirmed by user) -- was false.
 //#define INVERT_I_DIR false
 //#define INVERT_J_DIR false
 //#define INVERT_K_DIR false

@@ -80,6 +80,38 @@ Changes:
 - Did NOT merge to `main` — all of the above is on the existing feature
   branch only, per explicit instruction that this repo is not ready to share.
 
+**[2026-10-04] First actual firmware fixes, based on the user's direct physical
+observation (brief Rule 4 — user's observation outranks guessing from logs):**
+
+- `Marlin/Configuration.h:1151` — `Z_MIN_PROBE_ENDSTOP_INVERTING` `true` → `false`.
+  User directly confirmed, from watching the machine, that the probe's trigger
+  logic is backwards. This was flagged unverified in brief §7 from the start;
+  now resolved by physical test.
+- `Marlin/Configuration.h:1675` — `INVERT_Z_DIR` `false` → `true`. User directly
+  confirmed Z homed in the wrong direction. Also flagged unverified in §7;
+  resolved the same way.
+- `Marlin/Configuration.h:1673` — updated the `INVERT_X_DIR` comment to
+  "confirmed" rather than "starting guess, verify" — user confirmed `+X` jog
+  moves away from the X endstop as expected. Value itself (`true`) unchanged.
+- Before making the Z changes, did a full pass of `Configuration.h` and
+  `Configuration_adv.h` specifically for anything that could explain the fans
+  and both heaters being completely unresponsive: `HEATER_0_INVERTING`/
+  `HEATER_BED_INVERTING` (the only `HEATER_BED_INVERTING` in the file is
+  inside a disabled `#if ENABLED(HEPHESTOS2_HEATED_BED_KIT)` block — inert),
+  fan PWM/inversion settings (`FAN_SOFT_PWM`, `FAN_MIN_PWM`, `FAN_OFF_PWM` —
+  all commented out, defaults apply), heater pins in the pins file (PC8/PC9,
+  correct, not -1), and MINTEMP/MAXTEMP/`EXTRUDE_MINTEMP` (all sane values,
+  nothing blocking). **Found nothing wrong in the code for fans or heaters.**
+  Reporting this as a genuine negative result, not a dodge: the two most
+  likely remaining explanations are (a) a real hardware/wiring issue
+  (connector, MOSFET, fuse — exactly what a separate ChatGPT session
+  concluded independently for FAN0 on this same project), or (b) the TFT
+  console's demonstrated unreliability (the `z_min`/`z_probe` mislabeling and
+  the `M105` "black screen" already logged above) is also swallowing or
+  misrepresenting the heater/fan command results. Direct USB serial testing
+  (bypassing the TFT) remains the fastest way to tell these apart and hasn't
+  been done yet.
+
 ## Open questions for the user
 
 **[2026-10-03] First physical test run received.** Raw results saved verbatim
