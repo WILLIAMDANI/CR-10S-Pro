@@ -131,6 +131,52 @@ No GitHub Issues opened yet for any of the above — premature until the
 reset/power-cycle question resolves which failures (if any) are independent
 of each other.
 
+**Update [2026-10-03] — user provided M119 photos, then the actual flashed
+`firmware.bin`. Binary inspected directly (strings on the raw .bin, no
+toolchain needed) rather than guessing. Findings, and one correction to the
+prior update's analysis:**
+
+- The user initially worried this firmware came from "the other Claude chat"
+  (a different, possibly unconfigured build). Checked the binary directly:
+  `FIRMWARE_NAME:Marlin 2.1.2.8`, `MACHINE_TYPE:CR-10S Pro`, and a config date
+  of `2026-06-24` are all embedded in it — matches this repo's actual
+  `Configuration.h`/pins file exactly (`MOTHERBOARD BOARD_BTT_SKR_MINI_E3_V3_0`,
+  `HEATER_0_PIN PC8`, `HEATER_BED_PIN PC9`, `FAN0/1/2_PIN` PC6/PC7/PB15,
+  `USE_CONTROLLER_FAN`/`CONTROLLER_FAN_PIN FAN2_PIN`,
+  `E0_AUTO_FAN_PIN FAN1_PIN` — all present since the very first commit,
+  confirmed via `git log -p`, never touched). **This is this repo's build.**
+  A separate narrative the user relayed from ChatGPT, describing "fixing" the
+  motherboard selection and heater pins, describes symptoms of an
+  unconfigured/stock Marlin checkout — not anything that was ever wrong in
+  this repo. Likely explanation: a separate local folder/download, unrelated
+  to this one. No action needed on this repo either way, since the settings
+  it describes "fixing" already match.
+- **Correction to this file's own prior update:** the previous entry
+  theorized the M119 `z_min:` line was noise from the physically-unused
+  Z-STOP (PC2) pin floating. That reasoning was based on this repo's
+  *source*, not the actual compiled binary. Checking the real `.bin` directly:
+  the literal string `z_min` is **not compiled in at all** (absent from the
+  binary), while `z_probe` **is** present and correctly structured. Marlin
+  physically cannot emit a `z_min:` line from this exact build. This means
+  the TFT's display of `z_min: TRIGGERED`/`open` was almost certainly the
+  TFT's own generic endstop-label template being applied to whatever it
+  received (likely the real `z_probe:` line), not a literal relay of Marlin's
+  field name — so the earlier "it's just floating-pin noise, ignore it"
+  guidance was probably wrong, and was retracted to the user. The two
+  different readings between the two M119 captures may reflect a genuine,
+  meaningful probe state change after all, not noise.
+- Saved the binary at `firmware/firmware-2026-10-03-v1.bin` and logged it in
+  `firmware/README.md`'s build table as **untested** (verified to match this
+  repo; hardware test results still inconclusive, not yet a clean pass or a
+  confirmed fail).
+- Asked the user to re-run `M119` and the heater commands over **direct USB
+  serial** (bypassing the TFT console entirely) for the next round of
+  testing, since the TFT has now been implicated in at least two confusing
+  results (this mislabeling, and the earlier `M105` "black screen"). No
+  firmware/config changes made — the puzzle at this point looks increasingly
+  like "the TFT's console view can't be fully trusted as a raw data source,"
+  not a firmware defect.
+
 QUESTION [1]
 What I need to know:      This sandbox session's outbound network policy blocks `api.registry.platformio.org`, `api.registry.nm1.platformio.org`, and `collector.platformio.org` (confirmed via the proxy status endpoint: each returns HTTP 403, "policy denial"). PlatformIO needs the first two to download the `ststm32` platform, the STM32G0 Arduino framework, and the ARM GCC toolchain — none of that is present locally and there is no code-only substitute.
 Why it matters:           The firmware cannot be compiled at all until these downloads succeed. This blocks Phase 2/3/4 of the brief entirely — it is not a config or source problem, so I have not touched any file in response to it (see brief Rule 1).

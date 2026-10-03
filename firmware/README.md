@@ -9,20 +9,12 @@ are the actual deliverable.
 
 | Filename | Date | What changed | Status |
 |---|---|---|---|
-| *(none yet)* | — | — | — |
+| [`firmware-2026-10-03-v1.bin`](firmware-2026-10-03-v1.bin) | 2026-10-03 | First build verified against this repo's config (user-built locally, attached in chat). Compiled 2026-09-24. Confirmed via embedded strings: `Marlin 2.1.2.8`, `MACHINE_TYPE:CR-10S Pro`, config date 2026-06-24 — matches this repo, not a different/stock build. `z_probe` reporting is compiled in; `z_min` is not (expected, since the probe shares logic with the would-be Z-min endstop). | **untested** — TC-001/002/003/039 passed on hardware; TC-004 onward produced results still being diagnosed (see `docs/BUILD-LOG.md`), largely complicated by the TFT console appearing to relabel/mangle some output. Not yet a clean pass or a confirmed fail. |
 
-**No build exists in this repo yet.** This sandbox's outbound network policy
-blocks `api.registry.platformio.org`/`api.registry.nm1.platformio.org`, which
-PlatformIO needs to download the STM32G0 toolchain — this has been a
-persistent, unresolved blocker across multiple sessions (see
-`docs/BUILD-LOG.md`). Two ways to get the first real entry into this table:
-
-1. **Build locally** (as done once before, successfully, in VS Code + PlatformIO
-   on a normal machine with internet access) and attach the resulting
-   `firmware.bin` to the chat — it'll be placed here, named, and logged
-   properly.
-2. **Fix the sandbox's network policy** so this environment can reach the
-   PlatformIO registry, then ask for a fresh build.
+This sandbox's outbound network policy still blocks
+`api.registry.platformio.org`/`api.registry.nm1.platformio.org`, so builds in
+this environment remain blocked (see `docs/BUILD-LOG.md`) — the entry above
+was built locally by the user and attached in chat, same path as before.
 
 Status values used in the table above: **untested** (compiles, never run on
 the printer) · **passed** (a regression run completed with no blocking FAILs)

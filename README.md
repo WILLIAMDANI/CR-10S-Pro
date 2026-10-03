@@ -50,8 +50,10 @@ TEST-SCRIPTS/  — the test case library and per-build regression run records
 
 ## Latest firmware
 
-No verified build exists yet — see [`firmware/README.md`](firmware/README.md)
-for current status and why.
+[`firmware/firmware-2026-10-03-v1.bin`](firmware/firmware-2026-10-03-v1.bin) —
+status: **untested** (verified to match this repo's config; hardware test
+results still being diagnosed). See [`firmware/README.md`](firmware/README.md)
+for the full build table.
 
 ## Credits & License
 
