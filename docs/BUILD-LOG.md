@@ -82,6 +82,55 @@ Changes:
 
 ## Open questions for the user
 
+**[2026-10-03] First physical test run received.** Raw results saved verbatim
+at `TEST-SCRIPTS/regression-runs/2026-10-02-pending-sha.md`. Summary: TC-001,
+002, 003, 039 (boot/TFT) all PASS. Everything from TC-004 onward (E-stop,
+driver comm, fans, heaters) reported FAIL, plus free-form notes on Z
+homing/probe behavior and X/Y jogging. Analysis before touching anything —
+per Rule 1, no config or firmware file was changed in response to this data:
+
+- **Leading hypothesis for TC-005/006/014/015/016 and the heater failure:**
+  `M112` (TC-004) is designed to halt everything and refuse further commands
+  until the board is reset — that is correct, intended behavior, not a bug.
+  If the board was not power-cycled between TC-004 and the tests that follow
+  it, every one of those "FAILs" could be the same single cause (board still
+  killed) rather than five independent defects. Asked the user to confirm
+  whether a reset happened, and to re-test `M105`/`M104`/`M140` fresh after a
+  power cycle, with no `M112` involved, before concluding anything about
+  drivers or heaters.
+- **Z-axis/probe behavior (Group D) treated as a real, separate finding,
+  not noise.** The user ran full `G28` (not the isolated `M119` checks in
+  TC-007–009) and described: (a) with the probe clear, Z drove *upward*
+  during homing and gave up — the homing search should drive toward the bed;
+  this is the signature of `INVERT_Z_DIR` being backwards, which brief §7
+  already flags as unverified. (b) With the probe deliberately held
+  triggered, Z kept driving down the whole time, only reacting once released
+  — Marlin should refuse to move at all if the probe already reads triggered
+  before the search starts; this is the signature of
+  `Z_MIN_PROBE_ENDSTOP_INVERTING` also being backwards, also flagged
+  unverified in §7. Both are plausible and both are exactly the kind of
+  setting brief Rule 1 says must be confirmed by physical test, not guessed —
+  declined to flip either setting on a paraphrased description of a full
+  `G28` run. Also flagged to the user that this skipped the safety order the
+  brief specifies: TC-012 (manual `+Z` jog, hand near the power switch) is
+  meant to happen *before* any `G28`, specifically to catch a bad Z direction
+  by hand rather than during an automated homing search. This time the
+  failure direction happened to be the safe one (away from the bed), but
+  that was luck, not confirmation, and the user was asked not to run further
+  `G28` attempts until the direction is confirmed via isolated `M119` first.
+- Asked for exact verbatim on-screen/serial text for TC-015 and TC-016
+  (notes were too garbled to act on — e.g. "notification no move ok p15 B3")
+  — pointed back to `RESULT-ENTRY-TEMPLATE.md`'s "exact printer output" field
+  for future reports.
+- Noted the run's header still has unfilled placeholders — asked which
+  commit this firmware was actually built from, and asked the user to attach
+  the actual `firmware.bin` they built and flashed locally, since it passed
+  TC-001/002 but was never added to `firmware/`.
+
+No GitHub Issues opened yet for any of the above — premature until the
+reset/power-cycle question resolves which failures (if any) are independent
+of each other.
+
 QUESTION [1]
 What I need to know:      This sandbox session's outbound network policy blocks `api.registry.platformio.org`, `api.registry.nm1.platformio.org`, and `collector.platformio.org` (confirmed via the proxy status endpoint: each returns HTTP 403, "policy denial"). PlatformIO needs the first two to download the `ststm32` platform, the STM32G0 Arduino framework, and the ARM GCC toolchain — none of that is present locally and there is no code-only substitute.
 Why it matters:           The firmware cannot be compiled at all until these downloads succeed. This blocks Phase 2/3/4 of the brief entirely — it is not a config or source problem, so I have not touched any file in response to it (see brief Rule 1).
