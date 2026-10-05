@@ -5,6 +5,10 @@ batch). This is NOT the full regression suite — TEST-CASES.md and
 regression-runs/TEMPLATE.md are untouched and still the real suite for a
 normal firmware build. Fill this out on the iPad at the printer, one batch
 at a time, in order (0, then 1, then 2).
+
+Branch: bisect/batch-audit-v2 (not bisect/batch-audit — that branch's first
+three batch commits failed to compile and were superseded; see
+docs/BUILD-LOG.md, 2026-10-05 entries).
 -->
 
 # Bisect Quick-Check — Batches 0, 1, 2
@@ -23,7 +27,7 @@ GitHub Issue: #1 — paste/fill results there too
 
 
 
-Batch/commit SHA: `c964220` __________ (confirm it matches what you flashed)
+Batch/commit SHA: `e0b3175` __________ (confirm it matches what you flashed)
 M115 compile date shown: ______________
 M105 temps sane at room temp: ✅ PASS ❌ FAIL ➖ NOT RUN — Notes: __________
 Hotend heats at `M104 S50`: ✅ PASS ❌ FAIL ➖ NOT RUN — Notes: __________
@@ -38,7 +42,7 @@ GitHub Issue: #2 — paste/fill results there too
 
 
 
-Batch/commit SHA: `1aacf31` __________
+Batch/commit SHA: `a89cdf4` __________
 M115 compile date shown: ______________
 M105 temps sane at room temp: ✅ PASS ❌ FAIL ➖ NOT RUN — Notes: __________
 Hotend heats at `M104 S50`: ✅ PASS ❌ FAIL ➖ NOT RUN — Notes: __________
@@ -53,7 +57,7 @@ GitHub Issue: #3 — paste/fill results there too
 
 
 
-Batch/commit SHA: `e49a451` __________
+Batch/commit SHA: `5626eb4` __________
 M115 compile date shown: ______________
 M105 temps sane at room temp: ✅ PASS ❌ FAIL ➖ NOT RUN — Notes: __________
 Hotend heats at `M104 S50`: ✅ PASS ❌ FAIL ➖ NOT RUN — Notes: __________
