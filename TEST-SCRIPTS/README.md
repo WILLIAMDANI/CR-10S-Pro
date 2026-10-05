@@ -43,6 +43,14 @@ Traceability reads the same way Jira/Xray would give you:
 - **BLOCKED** — couldn't be run (earlier step failed, hardware not in the right state, etc.). Not the same as FAIL.
 - **NOT RUN** — not attempted yet this cycle.
 
+## Bisection quick-check (Batches 0, 1, 2 only)
+
+`regression-runs/BISECT-QUICKCHECK.md` is a separate, short sheet for the
+heater/fan bisection builds — not part of the regular regression suite above.
+Use it only when testing `firmware-batch0.bin`, `firmware-batch1.bin`, or
+`firmware-batch2.bin` from the `bisect/batch-audit` branch. The full
+`TEST-CASES.md` suite still applies to every normal firmware build.
+
 ## Workflow for a new firmware build
 
 1. Copy `regression-runs/TEMPLATE.md` to `regression-runs/<YYYY-MM-DD>-<short-sha>.md`.
