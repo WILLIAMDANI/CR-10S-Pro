@@ -59,16 +59,9 @@
 #define Z_STOP_PIN                          PC2   // Z-STOP
 
 //
-// Z Probe
+// Z Probe must be this pin
 //
-// CUSTOM WIRING NOTE (CR-10S Pro / SKR Mini E3 V3.0 rebuild):
-// The stock 5-pin "PROBE" header (PC14) is NOT used on this machine.
-// The fixed inductive Z-probe (Creality SZC-M18-8DN) is instead wired into
-// the "E0-STOP" screw terminal (PC15), matching the physical build's wiring
-// diagram. Z_MIN_PROBE_PIN is redirected here accordingly. There is no
-// filament runout sensor installed, so PC15 is safely repurposed.
-//
-#define Z_MIN_PROBE_PIN                     PC15  // E0-STOP (repurposed for fixed inductive Z-probe)
+#define Z_MIN_PROBE_PIN                     PC14  // PROBE
 
 //
 // Probe enable
@@ -79,11 +72,10 @@
 
 //
 // Filament Runout Sensor
-// -- Not installed on this machine. PC15 is used by the Z-probe instead (see above).
 //
-//#ifndef FIL_RUNOUT_PIN
-//  #define FIL_RUNOUT_PIN                    PC15  // E0-STOP -- now used by Z-probe, see note above
-//#endif
+#ifndef FIL_RUNOUT_PIN
+  #define FIL_RUNOUT_PIN                    PC15  // E0-STOP
+#endif
 
 //
 // Power-loss Detection
