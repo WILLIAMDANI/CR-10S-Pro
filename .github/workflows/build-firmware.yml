@@ -1,0 +1,88 @@
+name: build-firmware
+
+# Builds the three bisection batches (commits c964220, 1aacf31, e49a451 on
+# bisect/batch-audit) via PlatformIO on GitHub's own runners. This exists
+# because the Claude Code sandbox used to develop this firmware cannot reach
+# api.registry.platformio.org (outbound policy denial) -- GitHub Actions
+# runners have normal internet access and are not subject to that block.
+#
+# Output: one firmware-batchN.bin per batch, uploaded as a workflow artifact
+# and attached to a GitHub Release tagged "bisect-batches".
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - bisect/batch-audit
+    paths:
+      - ".github/workflows/build-firmware.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build-batch:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - batch: 0
+            sha: c964220
+          - batch: 1
+            sha: 1aacf31
+          - batch: 2
+            sha: e49a451
+    steps:
+      - name: Check out batch ${{ matrix.batch }} (${{ matrix.sha }})
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PlatformIO
+        run: pip install -U platformio
+
+      - name: Build STM32G0B1RE_btt
+        run: pio run -e STM32G0B1RE_btt
+
+      - name: Rename output
+        run: cp .pio/build/STM32G0B1RE_btt/firmware.bin firmware-batch${{ matrix.batch }}.bin
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-batch${{ matrix.batch }}
+          path: firmware-batch${{ matrix.batch }}.bin
+          retention-days: 90
+
+  release:
+    needs: build-batch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all batch artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Flatten artifacts into one directory
+        run: |
+          mkdir -p out
+          find artifacts -name '*.bin' -exec cp {} out/ \;
+          ls -la out
+
+      - name: Publish/update bisect-batches release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: bisect-batches
+          name: bisect-batches
+          body: |
+            Automated bisection builds for the CR-10S Pro / SKR Mini E3 V3.0 heater/fan investigation.
+            Batch 0 = unmodified official Marlin CR-10S + SKR Mini E3 3.0 example (zero of this project's changes).
+            Batch 1 = Batch 0 + this project's stepper currents.
+            Batch 2 = Batch 1 + this project's probe architecture.
+            See TEST-SCRIPTS/regression-runs/BISECT-QUICKCHECK.md for what to run with each one.
+          files: out/*.bin
