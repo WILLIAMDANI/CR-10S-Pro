@@ -10,11 +10,19 @@ are the actual deliverable.
 | Filename | Date | What changed | Status |
 |---|---|---|---|
 | [`firmware-2026-10-03-v1.bin`](firmware-2026-10-03-v1.bin) | 2026-10-03 | First build verified against this repo's config (user-built locally, attached in chat). Compiled 2026-09-24. Confirmed via embedded strings: `Marlin 2.1.2.8`, `MACHINE_TYPE:CR-10S Pro`, config date 2026-06-24 — matches this repo, not a different/stock build. `z_probe` reporting is compiled in; `z_min` is not (expected, since the probe shares logic with the would-be Z-min endstop). | **untested** — TC-001/002/003/039 passed on hardware; TC-004 onward produced results still being diagnosed (see `docs/BUILD-LOG.md`), largely complicated by the TFT console appearing to relabel/mangle some output. Not yet a clean pass or a confirmed fail. |
+| [`firmware-batch0.bin`](https://github.com/WILLIAMDANI/CR-10S-Pro/releases/download/bisect-batches/firmware-batch0.bin) | 2026-10-05 | Bisection Batch 0 — stock Marlin 2.1.2.8 + only the board-targeting settings the official CR-10S/SKR-Mini-E3-3.0 example uses (no probe remap, no current bump). Built for real by GitHub Actions CI (`bisect/batch-audit-v2`, commit `e0b3175`), not this sandbox. | **untested** — just compiled; see `TEST-SCRIPTS/regression-runs/BISECT-QUICKCHECK.md` and GitHub Issue #1. |
+| [`firmware-batch1.bin`](https://github.com/WILLIAMDANI/CR-10S-Pro/releases/download/bisect-batches/firmware-batch1.bin) | 2026-10-05 | Bisection Batch 1 — Batch 0 + this project's stepper currents. Built by CI, commit `a89cdf4`. | **untested** — see Issue #2. |
+| [`firmware-batch2.bin`](https://github.com/WILLIAMDANI/CR-10S-Pro/releases/download/bisect-batches/firmware-batch2.bin) | 2026-10-05 | Bisection Batch 2 — Batch 1 + this project's probe architecture (PC15 remap, probe-only Z homing). Built by CI, commit `5626eb4`. | **untested** — see Issue #3. |
 
 This sandbox's outbound network policy still blocks
 `api.registry.platformio.org`/`api.registry.nm1.platformio.org`, so builds in
-this environment remain blocked (see `docs/BUILD-LOG.md`) — the entry above
-was built locally by the user and attached in chat, same path as before.
+this environment remain blocked (see `docs/BUILD-LOG.md`). The first entry
+above was built locally by the user and attached in chat. The three batch
+builds were compiled for real by the `build-firmware` GitHub Actions
+workflow (`.github/workflows/build-firmware.yml`), which runs on GitHub's
+own servers and isn't behind this sandbox's block — see the
+[`bisect-batches` release](https://github.com/WILLIAMDANI/CR-10S-Pro/releases/tag/bisect-batches)
+and run [#3](https://github.com/WILLIAMDANI/CR-10S-Pro/actions/runs/37374186750) (success).
 
 Status values used in the table above: **untested** (compiles, never run on
 the printer) · **passed** (a regression run completed with no blocking FAILs)
