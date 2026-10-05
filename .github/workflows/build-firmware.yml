@@ -24,14 +24,15 @@ jobs:
   build-batch:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
           - batch: 0
-            sha: c964220
+            sha: c964220065395bc77d22e3d3aad8a2307c9ca28c
           - batch: 1
-            sha: 1aacf31
+            sha: 1aacf3166ee362ad11c7efdb8aa202eeab55d1f8
           - batch: 2
-            sha: e49a451
+            sha: e49a4515923510da4086c4e63e92f30c552b153d
     steps:
       - name: Check out batch ${{ matrix.batch }} (${{ matrix.sha }})
         uses: actions/checkout@v4
