@@ -61,7 +61,9 @@
 //
 // Z Probe must be this pin
 //
-#define Z_MIN_PROBE_PIN                     PC14  // PROBE
+// Batch 2: moved from PC14 (dedicated PROBE header) to PC15 (E0-STOP) --
+// matches this repo's actual wiring, per the project's HARDWARE-WIRING.md.
+#define Z_MIN_PROBE_PIN                     PC15  // E0-STOP
 
 //
 // Probe enable
@@ -72,10 +74,11 @@
 
 //
 // Filament Runout Sensor
+// Batch 2: disabled -- would collide with the probe on PC15, no runout sensor installed.
 //
-#ifndef FIL_RUNOUT_PIN
-  #define FIL_RUNOUT_PIN                    PC15  // E0-STOP
-#endif
+//#ifndef FIL_RUNOUT_PIN
+//  #define FIL_RUNOUT_PIN                    PC15  // E0-STOP
+//#endif
 
 //
 // Power-loss Detection
