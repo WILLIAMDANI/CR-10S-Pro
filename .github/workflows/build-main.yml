@@ -1,0 +1,59 @@
+name: build-main
+
+# Builds whatever is currently on this branch (all fixes included: Z
+# direction, Z-probe inverting, stepper currents, probe remap) via
+# PlatformIO on GitHub's own runners -- this sandbox can't reach the
+# PlatformIO registry, GitHub Actions can.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/master-brief-review-rabxqg
+    paths:
+      - "Marlin/**"
+      - "ini/**"
+      - "platformio.ini"
+      - ".github/workflows/build-main.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PlatformIO
+        run: pip install -U platformio
+
+      - name: Build STM32G0B1RE_btt
+        run: pio run -e STM32G0B1RE_btt
+
+      - name: Rename output
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          cp .pio/build/STM32G0B1RE_btt/firmware.bin firmware-main-${SHORT_SHA}.bin
+          echo "SHORT_SHA=${SHORT_SHA}" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-main-${{ env.SHORT_SHA }}
+          path: firmware-main-${{ env.SHORT_SHA }}.bin
+          retention-days: 90
+
+      - name: Publish/update main-build release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: main-build
+          name: main-build (latest)
+          body: |
+            Latest build of this project's actual main branch (claude/master-brief-review-rabxqg),
+            commit ${{ github.sha }} -- includes all current fixes: INVERT_Z_DIR, Z_MIN_PROBE_ENDSTOP_INVERTING,
+            stepper currents, probe remap to PC15. This release is overwritten on every push to main.
+          files: firmware-main-${{ env.SHORT_SHA }}.bin
