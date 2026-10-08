@@ -48,8 +48,16 @@ Traceability reads the same way Jira/Xray would give you:
 `regression-runs/BISECT-QUICKCHECK.md` is a separate, short sheet for the
 heater/fan bisection builds — not part of the regular regression suite above.
 Use it only when testing `firmware-batch0.bin`, `firmware-batch1.bin`, or
-`firmware-batch2.bin` from the `bisect/batch-audit` branch. The full
+`firmware-batch2.bin` from the `bisect/batch-audit-v2` branch. The full
 `TEST-CASES.md` suite still applies to every normal firmware build.
+
+## Main build quick-check (fans / Z direction / Z probe / heat)
+
+`regression-runs/MAIN-BUILD-QUICKCHECK.md` is the short sheet for
+`firmware-main-<sha>.bin` (the `main-build` release) — it checks exactly
+the 5 things that were flagged broken: fans, Z direction, Z probe, hotend
+heat, hotbed heat. Run this first on a new main build; run the full
+`TEST-CASES.md` suite afterward for everything else.
 
 ## Workflow for a new firmware build
 
