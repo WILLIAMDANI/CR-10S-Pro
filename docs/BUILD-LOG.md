@@ -285,3 +285,9 @@ New batch commits (on a rewritten local history, since the old batch commits wer
 - `INVERT_X_DIR` / `INVERT_E0_DIR` set to `true` — unverified per §7, left as-is; only physical jog/extrude test can resolve.
 - `INVERT_Z_DIR` — left at its provided value (false); unverified per §7.
 - Conservative acceleration values — deliberate per §5.2, not "fixed" toward stock defaults.
+
+## Codex review — 2026-10-10
+
+- Owner requested review of Claude's work and a GitHub handoff, confirming hardware/wiring as the baseline. Added `docs/CODEX-REVIEW-FOR-CLAUDE.md` on `codex/firmware-review`; no firmware source changed. Findings include TFT host integration gaps, unresolved Z evidence, unsupported bed PID/M48 test commands, reset/thermal-test procedure errors, stale documentation, and unsupported hardware conclusions in bisection guidance.
+- Compared the full checkout against upstream Marlin 2.1.2.8 and consulted BTT board/TFT documentation. Found the version-matched `MarlinFirmware/Configurations` branch `release-2.1.2.8`, superseding the earlier claim that no matching branch exists; this is not an exact example for the converted printer.
+- Registry access recovered during review. Unchanged main source built successfully using PlatformIO 6.1.19, target STM32G0B1RE_btt, four build jobs; 106.89 seconds. Firmware binary 152,952 bytes, SHA256 `030f660d236d62ac4486ed03aa117b01f447bfd9a9dbad9f893879ac52e7dad7`. Warnings: no user feedback method and DIAG-jumper advisory. Physical checks remain unrun; compilation is not evidence of a functional fix.
