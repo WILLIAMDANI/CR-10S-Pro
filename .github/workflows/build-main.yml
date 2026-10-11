@@ -73,6 +73,21 @@ jobs:
             firmware-main.manifest.txt
           retention-days: 90
 
+      - name: Remove stale assets from old naming scheme
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view main-build --repo "${{ github.repository }}" --json assets \
+            --jq '.assets[].name' 2>/dev/null | while read -r name; do
+            case "$name" in
+              firmware-main.bin|firmware-main.bin.sha256|firmware-main.manifest.txt) ;;
+              *)
+                echo "Deleting stale asset: $name"
+                gh release delete-asset main-build "$name" --repo "${{ github.repository }}" --yes || true
+                ;;
+            esac
+          done
+
       - name: Publish/update main-build release
         uses: softprops/action-gh-release@v2
         with:
