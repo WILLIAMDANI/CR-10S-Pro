@@ -77,6 +77,7 @@ are clear to run.
 
 ### TC-006 — Driver currents match configuration
 **Area:** Drivers | **Priority:** Medium
+**Note (Codex review finding 8, 2026-10-10):** X/Y/E are at 800mA and Z at 1000mA deliberately for this specific machine (two Z motors sharing one driver). Other printers' reference configs using lower values don't by themselves prove these are wrong — tune from this machine's actual motors and observed behavior, not a reference comparison alone. This test confirms the configured values took effect, not that they're the "right" values in some absolute sense.
 **Procedure:** Send `M906` (no parameters) to report configured currents.
 **Expected Result:** Z current reads ~1000mA (raised from the 800 default specifically because two Z motors share this one driver — brief §5.3). X/Y/E at their configured values.
 **Pass Criteria:** Z reads ~1000mA, others plausible. **Fail Criteria:** Z still at stock 800 (means the current bump didn't take), or wildly wrong values.

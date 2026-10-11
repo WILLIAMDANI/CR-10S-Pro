@@ -277,6 +277,12 @@ New batch commits (on a rewritten local history, since the old batch commits wer
 
 **Update [2026-10-08]:** User pointed out the three bisect batches deliberately don't carry the Z-direction/Z-probe-inverting fixes from commit `386ae5b` (those were excluded on purpose, to isolate the heat/fan question using stock-recommended homing values) — so none of them is "the build with everything fixed." Correct, and that build (this branch's actual current source) had never been compiled since those two fixes landed. Added `.github/workflows/build-main.yml`: builds whatever is currently on this branch via the same GitHub Actions approach as the bisect batches, publishes to a release tagged `main-build` that overwrites on every push to main. First run succeeded: commit `a15e1b4`, `firmware-main-a15e1b4.bin` (152,952 bytes) — https://github.com/WILLIAMDANI/CR-10S-Pro/releases/tag/main-build. This is the build to flash and run the full regression suite against, not the bisect batches.
 
+QUESTION [3]
+What I need to know:      Which exact BIGTREETECH-TouchScreenFirmware version/release is flashed on the TFT35, and whether it's running in "Marlin mode" (touchscreen emulates a classic LCD) or its own native serial-host mode.
+Why it matters:           Codex review (`docs/CODEX-REVIEW-FOR-CLAUDE.md`, finding 1) flagged that this build was missing several Marlin host-protocol features the TFT firmware's own README lists as required. I've now enabled the exact set that README names as "General options which MUST be always activated" regardless of TFT version (`AUTO_REPORT_POSITION`, `M115_GEOMETRY_REPORT`, `M114_DETAIL`, `REPORT_FAN_CHANGE`, plus `EMERGENCY_PARSER`/host-dialog/onboard-media support) — but I'm doing that from the README's general requirements, not from a confirmed installed version. If the TFT runs an older/different build with different requirements, there could be a gap I can't see from here.
+How it could be answered: On the TFT's own menu, there's usually a firmware-version line (often under an "About"/info screen); alternatively the TFT's SD card, if it still has one, often has the flashed `.bin`'s filename or a version file on it.
+Who can answer:           [user, at the printer] — this is a physical fact about what's actually flashed on that board, not something derivable from this repo.
+
 ## Things I confirmed but did NOT change
 
 - `Z_MIN_PROBE_PIN` override (pins file + Configuration.h) — intentional per §5.1/§5.2.
