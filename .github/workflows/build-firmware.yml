@@ -45,20 +45,31 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install PlatformIO
-        run: pip install -U platformio
+      - name: Install PlatformIO (pinned)
+        run: pip install "platformio==6.1.19"
 
       - name: Build STM32G0B1RE_btt
         run: pio run -e STM32G0B1RE_btt
 
-      - name: Rename output
-        run: cp .pio/build/STM32G0B1RE_btt/firmware.bin firmware-batch${{ matrix.batch }}.bin
+      - name: Prepare artifact, hash, and manifest
+        run: |
+          cp .pio/build/STM32G0B1RE_btt/firmware.bin firmware-batch${{ matrix.batch }}.bin
+          sha256sum firmware-batch${{ matrix.batch }}.bin > firmware-batch${{ matrix.batch }}.bin.sha256
+          {
+            echo "batch: ${{ matrix.batch }}"
+            echo "commit: ${{ matrix.sha }}"
+            echo "platformio_version: 6.1.19"
+            echo "sha256: $(cut -d' ' -f1 firmware-batch${{ matrix.batch }}.bin.sha256)"
+          } > firmware-batch${{ matrix.batch }}.manifest.txt
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: firmware-batch${{ matrix.batch }}
-          path: firmware-batch${{ matrix.batch }}.bin
+          path: |
+            firmware-batch${{ matrix.batch }}.bin
+            firmware-batch${{ matrix.batch }}.bin.sha256
+            firmware-batch${{ matrix.batch }}.manifest.txt
           retention-days: 90
 
   release:
@@ -73,7 +84,7 @@ jobs:
       - name: Flatten artifacts into one directory
         run: |
           mkdir -p out
-          find artifacts -name '*.bin' -exec cp {} out/ \;
+          find artifacts -type f \( -name '*.bin' -o -name '*.sha256' -o -name '*.manifest.txt' \) -exec cp {} out/ \;
           ls -la out
 
       - name: Publish/update bisect-batches release
@@ -83,8 +94,12 @@ jobs:
           name: bisect-batches
           body: |
             Automated bisection builds for the CR-10S Pro / SKR Mini E3 V3.0 heater/fan investigation.
-            Batch 0 = unmodified official Marlin CR-10S + SKR Mini E3 3.0 example (zero of this project's changes).
-            Batch 1 = Batch 0 + this project's stepper currents.
-            Batch 2 = Batch 1 + this project's probe architecture.
+            Batch 0 = stock Marlin 2.1.2.8 + only the board-targeting settings the official
+            CR-10S + SKR Mini E3 3.0 example uses (not a verbatim copy of that example file --
+            see docs/BUILD-LOG.md 2026-10-05 for why). Batch 1 = Batch 0 + this project's stepper
+            currents. Batch 2 = Batch 1 + this project's probe architecture, but still carries
+            INVERT_Z_DIR false (the official example's value) -- see BISECT-QUICKCHECK.md's
+            safety notes before any Z motion on any of these three.
+            Each .bin has a matching .sha256 and .manifest.txt (commit + hash) alongside it.
             See TEST-SCRIPTS/regression-runs/BISECT-QUICKCHECK.md for what to run with each one.
-          files: out/*.bin
+          files: out/*
