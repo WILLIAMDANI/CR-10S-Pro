@@ -1,0 +1,29 @@
+name: regression-checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - claude/master-brief-review-rabxqg
+      - codex/regression-followup
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  firmware-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Protect reviewed firmware baseline
+        run: python TEST-SCRIPTS/check_firmware_baseline.py
+      - name: Install pinned build tooling
+        run: pip install 'platformio==6.1.19'
+      - name: Compile the actual printer target
+        run: pio run -e STM32G0B1RE_btt -j 4
+      - name: Require firmware output
+        run: test -s .pio/build/STM32G0B1RE_btt/firmware.bin
