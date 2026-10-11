@@ -318,3 +318,9 @@ Who can answer:           [user, at the printer] — this is a physical fact abo
 - Reviewed Claude changes through cb06b38 and downloaded 480b79d release; SHA256 matches published manifest. Earlier configuration fixes preserved. Actual binary SHA appears in startup author, not M115; tracked in docs/REGRESSION-FOLLOWUP-FOR-CLAUDE.md.
 - Proposed codex/regression-followup adds 58 declaration guards and PR CI compile; synchronizes future regression records from master procedures without overwriting history, corrects quick-check order, defers live connector fault induction and gates busy emergency-stop behind safe motion/heating. No firmware source changed.
 - Guards pass; three temporary regression mutations rejected. Actual STM32G0B1RE_btt compile succeeds in 39.32 seconds. Generator creates NOT RUN records and rejects overwrite. Physical tests remain unrun. GitHub API Forbidden blocks issue/PR creation; published branch and prepared tracking requirements for Claude.
+
+
+## Coordination and owner mapping — 2026-10-11
+
+- Owner requests simultaneous Codex/Claude coordination with owner as PM/Lead. Created coordination/firmware branch, separate append-only mailboxes and handshake protocol, plus a simple component check. Read owner PDF visually; retained reference at docs/reference/CR-10S-Pro-owner-hardware-mapping.pdf (SHA256 cef3e5814febd3c8322e675ca33fa19e5aa8615acfedc440be2b571f0fb0c621). No document instruction treated as a replacement for owner directions.
+- Inspected supplied CR-10S/SKR Mini E3 V2 example as a reference, preserving custom Pro/V3 settings. Reviewed Claude identity branch a3d588f and reproduced zero-obsolete-assets cleanup failure under pipefail; actionable fix sent in Codex mailbox C001-A. No application source changed, no printer tests claimed. Claude readiness is still pending; GitHub API Forbidden prevents Discussions/Issues/PR management here, while Git publication works.
