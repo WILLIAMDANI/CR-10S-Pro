@@ -204,8 +204,8 @@ These are provisional. Only physical testing resolves them. They are **not** bug
 | `INVERT_X_DIR` | `true` | Unverified |
 | `INVERT_E0_DIR` | `true` | Unverified |
 | `INVERT_Y_DIR` | `true` | Previously established on this machine |
-| `INVERT_Z_DIR` | `false` | Should still be confirmed before first `G28` |
-| `Z_MIN_PROBE_ENDSTOP_INVERTING` | `true` | Theoretically correct for NPN normally-open. Must be confirmed with `M119`. |
+| `INVERT_Z_DIR` | `true` | **Superseded 2026-10-04** (was `false`) — physical test showed `+Z` moving the wrong way at the time; flipped per user's direct observation (commit `386ae5b`). Codex review 2026-10-10 flagged that the regression run cited to justify this flip had an unconfirmed flashed commit — re-verify this on the exact binary currently in hand (`TEST-SCRIPTS/TEST-CASES.md` TC-012) before trusting either value from documentation alone. |
+| `Z_MIN_PROBE_ENDSTOP_INVERTING` | `false` | **Superseded 2026-10-04** (was `true`) — physical test showed probe logic backwards; flipped per user's direct observation (commit `386ae5b`). Re-verify with `M119` on the exact binary in hand (TC-009) before trusting documentation alone. |
 
 ---
 
@@ -320,9 +320,9 @@ Mark 120 mm of filament, extrude 100 mm, measure the remainder.
 **Step 9 — PID**
 ```
 M303 E0 S200 C8 U1
-M303 E-1 S60 C8 U1
 M500
 ```
+Bed is bang-bang (`PIDTEMPBED` disabled on purpose — see Codex review 2026-10-10, finding 4). Do NOT run `M303 E-1` — it needs `PIDTEMPBED` and will report an invalid-heater error on this build, not a hardware fault. Verify the bed instead with `M140 S40` and watch it cycle near setpoint on `M105`.
 
 **Step 10 — Mesh**
 `G29` → inspect values for sanity → `M500`.

@@ -4,6 +4,14 @@ name: build-main
 # direction, Z-probe inverting, stepper currents, probe remap) via
 # PlatformIO on GitHub's own runners -- this sandbox can't reach the
 # PlatformIO registry, GitHub Actions can.
+#
+# Build identity (Codex review finding 7, 2026-10-10): embeds the exact
+# commit SHA into the firmware's own version string (so M115 proves what's
+# actually flashed, not just a compile date), pins the PlatformIO version
+# instead of always installing latest, publishes a SHA256 + config manifest
+# alongside the binary, and uses a fixed filename + explicit target_commitish
+# so the release doesn't accumulate stale same-purpose assets under
+# different names every push.
 
 on:
   workflow_dispatch:
@@ -29,22 +37,40 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install PlatformIO
-        run: pip install -U platformio
+      - name: Install PlatformIO (pinned)
+        run: pip install "platformio==6.1.19"
+
+      - name: Embed commit SHA in firmware version string
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          sed -i "s|#define STRING_CONFIG_H_AUTHOR .*|#define STRING_CONFIG_H_AUTHOR \"main-build ${SHORT_SHA}\" // injected by build-main.yml|" Marlin/Configuration.h
+          echo "SHORT_SHA=${SHORT_SHA}" >> "$GITHUB_ENV"
 
       - name: Build STM32G0B1RE_btt
         run: pio run -e STM32G0B1RE_btt
 
-      - name: Rename output
+      - name: Prepare artifact, hash, and manifest
         run: |
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          cp .pio/build/STM32G0B1RE_btt/firmware.bin firmware-main-${SHORT_SHA}.bin
-          echo "SHORT_SHA=${SHORT_SHA}" >> "$GITHUB_ENV"
+          cp .pio/build/STM32G0B1RE_btt/firmware.bin firmware-main.bin
+          sha256sum firmware-main.bin > firmware-main.bin.sha256
+          {
+            echo "commit: ${{ github.sha }}"
+            echo "short_sha: ${SHORT_SHA}"
+            echo "built_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "platformio_version: 6.1.19"
+            echo "sha256: $(cut -d' ' -f1 firmware-main.bin.sha256)"
+            echo "--- key config values ---"
+            grep -E "^#define (MOTHERBOARD|SERIAL_PORT|BAUDRATE|INVERT_Z_DIR|INVERT_X_DIR|INVERT_E0_DIR|Z_MIN_PROBE_ENDSTOP_INVERTING|Z_MIN_PROBE_PIN|EMERGENCY_PARSER|Z_CURRENT|X_CURRENT|Y_CURRENT|E0_CURRENT)\b" Marlin/Configuration.h Marlin/Configuration_adv.h Marlin/src/pins/stm32g0/pins_BTT_SKR_MINI_E3_V3_0.h 2>/dev/null
+          } > firmware-main.manifest.txt
+          cat firmware-main.manifest.txt
 
       - uses: actions/upload-artifact@v4
         with:
           name: firmware-main-${{ env.SHORT_SHA }}
-          path: firmware-main-${{ env.SHORT_SHA }}.bin
+          path: |
+            firmware-main.bin
+            firmware-main.bin.sha256
+            firmware-main.manifest.txt
           retention-days: 90
 
       - name: Publish/update main-build release
@@ -52,8 +78,15 @@ jobs:
         with:
           tag_name: main-build
           name: main-build (latest)
+          target_commitish: ${{ github.sha }}
           body: |
             Latest build of this project's actual main branch (claude/master-brief-review-rabxqg),
             commit ${{ github.sha }} -- includes all current fixes: INVERT_Z_DIR, Z_MIN_PROBE_ENDSTOP_INVERTING,
-            stepper currents, probe remap to PC15. This release is overwritten on every push to main.
-          files: firmware-main-${{ env.SHORT_SHA }}.bin
+            stepper currents, probe remap to PC15. This release's assets are overwritten in place on every
+            push to main (fixed filenames, not SHA-suffixed) -- see firmware-main.manifest.txt for the exact
+            commit/config a given download corresponds to; don't assume the release body alone proves it
+            if the release page was viewed before this run finished.
+          files: |
+            firmware-main.bin
+            firmware-main.bin.sha256
+            firmware-main.manifest.txt

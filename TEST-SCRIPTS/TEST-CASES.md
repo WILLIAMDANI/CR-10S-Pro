@@ -56,9 +56,12 @@ are clear to run.
 
 ### TC-004 — M112 emergency stop
 **Area:** Safety | **Priority:** Critical — do this before any motion/heating test below.
-**Procedure:** With motors enabled and/or a heater on, send `M112`.
-**Expected Result:** Heaters and motion cut immediately; firmware requires a reset/reboot before accepting further motion (it should not silently resume).
-**Pass Criteria:** Immediate, total stop; no motion or heat continues after. **Fail Criteria:** Anything keeps running, or a subsequent command resumes motion without a reset.
+**Correction (Codex review finding 2 & 5, 2026-10-10):** `EMERGENCY_PARSER` is now enabled (see BUILD-LOG), so `M112` is intercepted on the receive path even during blocking moves/heating, on both UART2 (TFT) and USB. Test idle and busy separately, and **reboot after each** — this test case previously had no explicit mandatory reboot step, which let later tests run against a killed/halted board without anyone noticing.
+**Procedure, idle case:** Board idle (no motion, no heating). Send `M112`. Record the exact response/ack. Power-cycle or reset the board. Confirm fresh readiness with `M115` then `M105` before continuing.
+**Procedure, busy case:** Start a heater (`M104 S150`) and a long move, then send `M112` mid-move/mid-heat. Record the exact response and how fast heat/motion actually stopped (not just that a message appeared). Power-cycle or reset the board. Confirm fresh readiness with `M115` then `M105` before continuing.
+**Expected Result:** Heaters and motion cut immediately in both cases; firmware requires a reset/reboot before accepting further motion (it should not silently resume). A serial `M112` is a software stop, not a substitute for the physical power switch during commissioning — if it doesn't stop immediately, cut power.
+**Pass Criteria:** Immediate, total stop in both idle and busy cases; no motion or heat continues after; board needs a reboot to resume. **Fail Criteria:** Anything keeps running, or a subsequent command resumes motion/heat without a reset.
+**Mandatory next step:** Reboot and re-verify with `M115`/`M105` before running any later test case — do not continue testing against a board that was just killed.
 
 ---
 
@@ -66,9 +69,11 @@ are clear to run.
 
 ### TC-005 — TMC2209 driver communication
 **Area:** Drivers | **Priority:** High
+**Correction (Codex review finding 8, 2026-10-10):** `TMC_DEBUG` is disabled in this build. `M122` still compiles and runs `test_tmc_connection` (gated on `HAS_TRINAMIC_CONFIG`, not `TMC_DEBUG`), so it can confirm UART communication — but it will NOT produce the full comprehensive driver/overtemperature report some M122 documentation describes. Don't read a short/silent M122 as a driver fault without checking this first.
 **Procedure:** Send `M122`.
-**Expected Result:** All four drivers (X, Y, Z, E) report UART communication OK, no overtemperature warning, no all-zero/all-one garbage response.
-**Pass Criteria:** Clean report on all 4. **Fail Criteria:** Any driver reports a comm error or overtemp flag.
+**Expected Result:** All four drivers (X, Y, Z, E) report UART communication OK (no "driver not found"/garbage response). A full overtemperature/status table is NOT expected with `TMC_DEBUG` off.
+**Pass Criteria:** All 4 drivers confirm communication. **Fail Criteria:** Any driver reports a comm error, or all drivers return nothing/garbage (possible wiring or UART issue, not necessarily this setting).
+**If the full diagnostic report is actually needed:** enable `TMC_DEBUG` deliberately in a separate change and re-test — don't conclude anything about driver health from its absence alone.
 
 ### TC-006 — Driver currents match configuration
 **Area:** Drivers | **Priority:** Medium
@@ -93,9 +98,11 @@ Same as TC-007 for `y_min`.
 
 ### TC-009 — Z probe trigger logic
 **Area:** Probe | **Priority:** Critical
+**Correction (Codex review finding 3, 2026-10-10):** This result is a hard precondition for TC-012 and any `G28` — do not jog/home Z until BOTH states below are confirmed correct on the exact binary/commit you have flashed right now, not from a past build's results.
 **Procedure:** `M119` with nothing near the probe face; observe `z_probe`. Hold a metal object (this is an inductive sensor — must be metal, not any material) to the probe face; `M119` again.
-**Expected Result:** `open` when clear, `TRIGGERED` when metal is present.
-**Pass Criteria:** Matches expected. **Fail Criteria:** Inverted (if so: flip `Z_MIN_PROBE_ENDSTOP_INVERTING`, rebuild, reflash, re-run this test). **No response at all on `z_probe` → stop, this may mean the wiring question above is real; do not proceed to homing.**
+**Expected Result:** `open` when clear (released), `TRIGGERED` when metal is present.
+**Pass Criteria:** Released = `open` AND triggered = `TRIGGERED`, both confirmed. **Fail Criteria:** Inverted, reversed, or only one state correct (if so: flip `Z_MIN_PROBE_ENDSTOP_INVERTING`, rebuild, reflash, re-run this test from scratch — do not proceed). **No response at all on `z_probe` → stop, this may mean the wiring question above is real; do not proceed to homing.**
+**Gate:** Do not run TC-012's `G28` sub-test, or any `G28`, until this test passes on the currently-flashed commit.
 **Brief ref:** §7 (flagged unverified), §11 Step 2.
 
 ---
@@ -111,8 +118,17 @@ Same as TC-007 for `y_min`.
 Same pattern for `+Y`. **Fail →** flip `INVERT_Y_DIR`.
 
 ### TC-012 — Z direction (**safety-critical — read before running**)
-**Priority:** Critical | **Procedure:** Jog a small `+Z` move only, with a hand near the power switch.
-**Expected:** Nozzle moves **away** from the bed. **Fail →** flip `INVERT_Z_DIR`. **Never run `G28` until this passes.**
+**Priority:** Critical | **Preconditions:** TC-009 passed (both probe states correct) on the exact commit currently flashed.
+**Correction (Codex review finding 3, 2026-10-10):** An earlier regression run (before commit `386ae5b` inverted `INVERT_Z_DIR`) reported `+Z` already moving the nozzle up correctly — but that run's flashed commit was never confirmed, so it cannot be used to argue the later flip was wrong. Conversely, don't just trust the macro value either. Confirm fresh, on the binary in hand, every time this setting changes.
+**Also:** a `G28` sequence legitimately contains an upward clearance move *before* homing even starts — don't mistake that initial raise for "Z is inverted." Test the relative jog (below) separately from any `G28` behavior.
+**Procedure (relative jog, no homing):** `G91` (relative mode), jog a small `+Z` move (e.g. 5mm) only, with a hand near the power switch, then `G90` (back to absolute).
+**Expected:** Nozzle moves **away** from the bed. **Fail →** flip `INVERT_Z_DIR`, rebuild, reflash, re-run this test and TC-009 again before touching `G28`.
+**Only after this passes, test `G28` as its own separate sub-steps, each recorded individually:**
+1. Initial clearance raise (if any, before XY/Z homing starts) — legitimate upward move, not a sign of inversion.
+2. Homing descent — nozzle moves down toward the probe.
+3. Probe-trigger response — motion stops at the probe trigger, consistent with TC-009's confirmed polarity.
+4. Post-home raise (`Z_AFTER_HOMING`) — legitimate upward move afterward.
+**Fail Criteria (G28):** Descent doesn't stop at the probe trigger (crash risk — hand on power switch), or the sequence doesn't match this 4-step shape.
 **Brief ref:** §11 Step 3 — explicitly the step that "can crash the nozzle into the bed if done early."
 
 ### TC-013 — Extruder direction
@@ -234,6 +250,7 @@ Requires TC-022/023 passing first.
 **Fail Criteria:** Consistent error beyond ~1–2% — steps/mm may need adjusting, or something is slipping.
 
 ### TC-038 — Probe repeatability
+**Note (Codex review finding 5, 2026-10-10):** `M48` requires `Z_MIN_PROBE_REPEATABILITY_TEST`, which was disabled — this command did not exist in earlier builds. Deliberately enabled it (see BUILD-LOG) specifically so this test case works as written; confirm the flashed build actually has it before relying on this test.
 **Priority:** Medium | **Preconditions:** TC-022 PASS (homed). **Procedure:** `M48 P10 V2` — probes the same point 10 times and reports mean/deviation.
 **Expected:** Low standard deviation (inductive sensors are usually very consistent — large scatter suggests a mounting, wiring, or interference problem).
 **Fail Criteria:** High deviation, or any of the 10 probes fails to trigger.
@@ -249,26 +266,43 @@ Requires TC-022/023 passing first.
 **Procedure:** `M303 E0 S200 C8 U1`, then `M500`.
 **Expected:** Completes without a "PID Autotune failed" message; hotend holds target temp with acceptably low oscillation afterward.
 
-### TC-030 — Bed PID autotune
-Same pattern: `M303 E-1 S60 C8 U1`, `M500`.
+### TC-030 — Bed heat control sanity (not PID autotune)
+**Correction (Codex review finding 4, 2026-10-10):** `PIDTEMPBED` is disabled in `Configuration.h` (bang-bang bed control). `M303 E-1 ...` requires `PIDTEMPBED` and will report an invalid-heater error on this build — it is not a bed-hardware failure, it's a deterministic config/test mismatch. Do not run `M303 E-1`.
+**Procedure:** `M140 S40`, watch `M105` — bed temp should rise toward 40°C then cycle on/off around it (bang-bang, not a steady PID hold). `M140 S0` to turn off afterward.
+**Expected:** Bed heats and visibly cycles near setpoint. No `M500` needed — there's no bed PID term to save.
+**If bed PID is wanted later:** that's a separate, deliberate change (enable `PIDTEMPBED`, re-run autotune, validate) — not part of this fix pass.
 
-### TC-031 — Hotend thermal runaway protection (**do under supervision**)
+### TC-031 — Hotend sensor-disconnect protection (**do under supervision**)
 **Priority:** Critical, safety
-**Procedure:** While hotend is heating toward a target, briefly unplug the hotend thermistor connector, then reconnect.
-**Expected:** Marlin halts the heater and reports a thermal error (`THERMAL RUNAWAY` or `HEATING FAILED`) rather than continuing to heat blind.
-**Fail Criteria:** Heater keeps driving with no sensor feedback — this is a fire-safety-relevant failure, treat as highest severity.
-**Brief ref:** §5.2 `THERMAL_PROTECTION_HOTENDS`.
+**Correction (Codex review finding 5, 2026-10-10):** Unplugging a thermistor during heating tests *sensor-disconnect/MINTEMP protection*, not thermal-runaway protection — these are different failure paths in Marlin and the old procedure/expected-result conflated them. Renamed and re-scoped accordingly. **Reboot after this test before continuing**, per TC-004's mandatory-reboot rule.
+**Procedure:** While hotend is heating toward a target with a valid sensor reading, briefly unplug the hotend thermistor connector, then reconnect.
+**Expected:** Marlin halts the heater and reports a MINTEMP-class error (e.g. `Err: MINTEMP`) — the sensor reading goes out of range, which Marlin catches via `HEATER_0_MINTEMP`, not via the thermal-runaway watchdog.
+**Fail Criteria:** Heater keeps driving with no valid sensor feedback — this is a fire-safety-relevant failure, treat as highest severity.
+**Reboot required after this test.**
+**Brief ref:** §5.2 `HEATER_0_MINTEMP`.
 
-### TC-032 — Bed thermal runaway protection (**do under supervision**)
-**Priority:** Critical, safety — same test as TC-031, for the bed.
-**Procedure:** While the bed is heating toward a target, briefly unplug the bed thermistor connector, then reconnect.
-**Expected:** Marlin halts the bed heater and reports a thermal error.
-**Fail Criteria:** Bed heater keeps driving with no sensor feedback.
-**Brief ref:** §5.2 `THERMAL_PROTECTION_BED`.
+### TC-031b — Hotend heat-rise watch (normal operation, not a fault test)
+**Priority:** High
+**Procedure:** With a valid sensor, command a normal target (`M104 S150`) and watch `M105` — temperature should climb at a plausible rate toward target, not stall or fall behind the commanded ramp.
+**Expected:** Steady, plausible rise to target. This confirms the heater is actually being driven and the sensor is reporting correctly — it does not test the runaway watchdog itself.
 
-### TC-033 — MINTEMP/MAXTEMP enforcement
+### TC-031c — Sustained thermal-runaway watchdog (review only, do NOT induce on hardware)
+**Priority:** Informational
+**Why not a live test:** Actually triggering Marlin's `THERMAL_PROTECTION_PERIOD`/`HYSTERESIS` watchdog on real hardware means deliberately preventing a heater from reaching temperature while the sensor stays valid (e.g. physically decoupling the heater block) — an unsafe, fire-risk procedure to stage on purpose. Never disable thermal protection to force a pass, and never stage this fault physically.
+**What's actually validated:** `THERMAL_PROTECTION_HOTENDS`/`THERMAL_PROTECTION_BED` are enabled, and `THERMAL_PROTECTION_PERIOD`/`HYSTERESIS` match the values confirmed identical to the upstream/official references in the earlier audit (`docs/BUILD-LOG.md`). Treat that source-level confirmation as the validation for this path, not a live induced fault.
+
+### TC-032 — Bed sensor-disconnect protection (**do under supervision**)
+**Priority:** Critical, safety — same test as TC-031, for the bed. **Reboot after this test before continuing.**
+**Procedure:** While the bed is heating toward a target with a valid sensor reading, briefly unplug the bed thermistor connector, then reconnect.
+**Expected:** Marlin halts the bed heater and reports a MINTEMP-class error.
+**Fail Criteria:** Bed heater keeps driving with no valid sensor feedback.
+**Reboot required after this test.**
+**Brief ref:** §5.2 `BED_MINTEMP`.
+
+### TC-033 — MAXTEMP target clamping (not a MINTEMP/MAXTEMP fault-detection test)
+**Correction (Codex review finding 5, 2026-10-10):** `M104 S300` against `HEATER_0_MAXTEMP 275` tests the gcode target-clamping/parsing path, not the MINTEMP/MAXTEMP sensor-fault detection path (that's what TC-031/032 exercise). Renamed to avoid implying this is a safety-fault test — it is not, and does not need a high-temperature physical trial since no heater output above a safe level is actually expected.
 **Procedure:** Attempt `M104 S300` (above `HEATER_0_MAXTEMP 275`).
-**Expected:** Firmware refuses/clamps rather than driving the heater to an unsafe setpoint.
+**Expected:** Firmware refuses/clamps the target rather than driving the heater toward an unsafe setpoint.
 
 ---
 
