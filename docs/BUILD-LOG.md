@@ -283,6 +283,24 @@ Why it matters:           Codex review (`docs/CODEX-REVIEW-FOR-CLAUDE.md`, findi
 How it could be answered: On the TFT's own menu, there's usually a firmware-version line (often under an "About"/info screen); alternatively the TFT's SD card, if it still has one, often has the flashed `.bin`'s filename or a version file on it.
 Who can answer:           [user, at the printer] — this is a physical fact about what's actually flashed on that board, not something derivable from this repo.
 
+**Update [2026-10-11]:** Received and addressed `docs/CODEX-REVIEW-FOR-CLAUDE.md` (branch `codex/firmware-review`) — a review from a different assistant (Codex) that found real, specific firmware-integration and test-procedure defects, independent of the "is it hardware" question the owner had already closed. Commits `48c8a5b`, `28066c9`, `480b79d` on this branch address findings 1-8:
+- Enabled the Marlin host-protocol features BTT's TFT firmware README requires (`AUTO_REPORT_POSITION`, `M115_GEOMETRY_REPORT`, `M114_DETAIL`, `REPORT_FAN_CHANGE`) plus its host-dialog/emergency chain (`EMERGENCY_PARSER`, `SERIAL_FLOAT_PRECISION`, `HOST_ACTION_COMMANDS`, `HOST_PROMPT_SUPPORT`, `HOST_STATUS_NOTIFICATIONS`) and onboard-media browsing (`LONG_FILENAME_HOST_SUPPORT`, `AUTO_REPORT_SD_STATUS`) — verified the required/optional split against BTT's actual README rather than assuming.
+- Enabled `Z_MIN_PROBE_REPEATABILITY_TEST` so TC-038's `M48` works.
+- Rewrote TC-004 (M112) to test idle/busy separately with a mandatory reboot+readiness recheck.
+- Rewrote TC-009/TC-012 so Z direction/probe polarity is re-verified on the exact flashed commit every time, with `G28` broken into its legitimate phases so a normal clearance raise isn't misread as inversion.
+- Fixed the TC-030/master-brief-Step-9 bed PID mismatch (`PIDTEMPBED` is off — bang-bang bed, `M303 E-1` was a guaranteed test/config mismatch, not a bed fault).
+- Rewrote MAIN-BUILD-QUICKCHECK and BISECT-QUICKCHECK: added `M503` inspection, explicit `M17` before FAN2, exact relative Z-jog, released+triggered probe gates, shutdown commands, a BLOCKED result distinct from FAIL, and fixed the FAN1 test (`M104 S60`, not `S50`, since regulation can settle below a threshold without crossing it).
+- Replaced TC-031/032's mislabeled "thermal runaway" thermistor-unplug test with a correctly-named sensor-disconnect/MINTEMP test; added TC-031b/c; relabeled TC-033 as target-clamping.
+- Removed BISECT-QUICKCHECK's "points at hardware" overclaim for a Batch 0 failure; gave Batch 2 the same no-Z-motion gate as 0/1 (it still carries `INVERT_Z_DIR false`).
+- Corrected my own false claim (2026-10-05 entry above) that no version-matched `MarlinFirmware/Configurations` branch exists — `release-2.1.2.8` does, I'd only checked the rolling `bugfix-2.1.x` branch.
+- Added superseding notes to master brief §7 and this file's "confirmed but did not change" section, both of which still listed pre-flip `INVERT_Z_DIR`/`Z_MIN_PROBE_ENDSTOP_INVERTING` values as current.
+- Rebuilt `build-main.yml`: pinned PlatformIO to `6.1.19` (was always-latest), embedded the exact commit SHA into `STRING_CONFIG_H_AUTHOR` so `M115` proves what's flashed, publish a SHA256 + config-value manifest alongside the binary, set the release's `target_commitish` explicitly, switched to a fixed asset filename, and added a step that deletes stale same-purpose assets from the release (confirmed this was actually needed — the old `firmware-main-a15e1b4.bin` was still sitting in the release until this ran). Applied the same PlatformIO pin + SHA256/manifest to the bisect-batches workflow too.
+- Narrowed TC-005/TC-006 expectations (TMC_DEBUG off means M122 confirms comms but not full diagnostics; stepper currents are tuned deliberately for this machine, not copied from an unrelated reference).
+
+**Verified, not just claimed:** Both CI workflows re-ran after all of this. `build-main` run (https://github.com/WILLIAMDANI/CR-10S-Pro/actions/runs/38143857338) succeeded — commit `480b79d`, `firmware-main.bin`, SHA256 `ba2c8a1e3797c889c5282ab7bd0ae27e932ba209d8d2ca60265d9bf6b80a5656`, manifest confirms the key inverted/probe/host settings are actually in the compiled source. `build-firmware` (bisect batches) run also succeeded with the same pinned toolchain. Release asset lists checked directly via the GitHub API after each run — confirmed no stale duplicates remain on either release.
+
+**Not done / still open:** No physical printer test has run against this build yet. The TFT firmware version question (QUESTION [3] above) is still unanswered. Finding 4's choice (bang-bang vs. enabling bed PID) was made toward bang-bang/test-fix rather than enabling PID — that's a judgment call documented here, not something Codex mandated either way.
+
 ## Things I confirmed but did NOT change
 
 - `Z_MIN_PROBE_PIN` override (pins file + Configuration.h) — intentional per §5.1/§5.2.
