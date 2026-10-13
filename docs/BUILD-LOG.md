@@ -318,3 +318,8 @@ Who can answer:           [user, at the printer] — this is a physical fact abo
 - Reviewed Claude changes through cb06b38 and downloaded 480b79d release; SHA256 matches published manifest. Earlier configuration fixes preserved. Actual binary SHA appears in startup author, not M115; tracked in docs/REGRESSION-FOLLOWUP-FOR-CLAUDE.md.
 - Proposed codex/regression-followup adds 58 declaration guards and PR CI compile; synchronizes future regression records from master procedures without overwriting history, corrects quick-check order, defers live connector fault induction and gates busy emergency-stop behind safe motion/heating. No firmware source changed.
 - Guards pass; three temporary regression mutations rejected. Actual STM32G0B1RE_btt compile succeeds in 39.32 seconds. Generator creates NOT RUN records and rejects overwrite. Physical tests remain unrun. GitHub API Forbidden blocks issue/PR creation; published branch and prepared tracking requirements for Claude.
+
+
+## Joint component sheet — 2026-10-12
+
+- Added the simple manually paced component check agreed by Codex and Claude in D004 and the PM-relayed final acceptance. Idle M112 is early, with mandatory reboot/readiness; busy M112 is gated after verified heat/motion. Historical regression records and firmware source unchanged. Every physical result starts NOT RUN.
