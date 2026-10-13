@@ -61,7 +61,7 @@ heat, hotbed heat. Run this first on a new main build; run the full
 
 ## Workflow for a new firmware build
 
-1. Copy `regression-runs/TEMPLATE.md` to `regression-runs/<YYYY-MM-DD>-<short-sha>.md`.
+1. Generate a new run with `create_regression_run.py` using the verified artifact source commit and SHA256; see `regression-runs/TEMPLATE.md` for the command. The generator refuses to overwrite existing results.
 2. Fill in the header (git commit, what changed since the last run, tester, date).
 3. Work through `TEST-CASES.md` in order, recording one result line per test case.
 4. Any FAIL or BLOCKED → open a GitHub Issue, paste in the actual-vs-expected and
@@ -81,3 +81,7 @@ exist here at no extra cost. If this project ever grows past one tester/one unit
 (e.g. testing multiple printers, or handing this off to someone else), moving
 this same TC library into Jira/Xray at that point is a straightforward export —
 ask and a CSV can be generated from these files.
+
+## Automated regression guards
+
+`python3 TEST-SCRIPTS/check_firmware_baseline.py` from the repository root checks reviewed configuration declarations. GitHub `regression-checks` also builds the actual printer target. These checks do not certify physical operation. Intentional baseline changes require a reviewed PR and matching per-artifact regression evidence; preserve historical result files.

@@ -311,3 +311,10 @@ Who can answer:           [user, at the printer] — this is a physical fact abo
 - `INVERT_X_DIR` / `INVERT_E0_DIR` set to `true` — unverified per §7, left as-is; only physical jog/extrude test can resolve.
 - `INVERT_Z_DIR` — **superseded 2026-10-04, now `true`** (this line originally said "left at its provided value (false)," which is stale; see master brief §7 and commit `386ae5b`). Codex review 2026-10-10 flagged the regression run used to justify this flip had an unconfirmed flashed commit — re-verify on the exact binary in hand (TC-012) before trusting this note either way.
 - Conservative acceleration values — deliberate per §5.2, not "fixed" toward stock defaults.
+
+
+## Codex regression follow-up — 2026-10-11
+
+- Reviewed Claude changes through cb06b38 and downloaded 480b79d release; SHA256 matches published manifest. Earlier configuration fixes preserved. Actual binary SHA appears in startup author, not M115; tracked in docs/REGRESSION-FOLLOWUP-FOR-CLAUDE.md.
+- Proposed codex/regression-followup adds 58 declaration guards and PR CI compile; synchronizes future regression records from master procedures without overwriting history, corrects quick-check order, defers live connector fault induction and gates busy emergency-stop behind safe motion/heating. No firmware source changed.
+- Guards pass; three temporary regression mutations rejected. Actual STM32G0B1RE_btt compile succeeds in 39.32 seconds. Generator creates NOT RUN records and rejects overwrite. Physical tests remain unrun. GitHub API Forbidden blocks issue/PR creation; published branch and prepared tracking requirements for Claude.
