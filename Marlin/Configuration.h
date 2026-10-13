@@ -1148,7 +1148,7 @@
 #define U_MAX_ENDSTOP_INVERTING false // Set to true to invert the logic of the endstop.
 #define V_MAX_ENDSTOP_INVERTING false // Set to true to invert the logic of the endstop.
 #define W_MAX_ENDSTOP_INVERTING false // Set to true to invert the logic of the endstop.
-#define Z_MIN_PROBE_ENDSTOP_INVERTING false // Flipped 2026-10-04: physical test showed probe logic backwards (confirmed by user) -- was true.
+#define Z_MIN_PROBE_ENDSTOP_INVERTING true // Flipped back 2026-10-13: physical test on build 35c7404 showed M119 reversed vs. the probe's own LED (open-when-blocked, TRIGGERED-when-released) -- was false. See docs/BUILD-LOG.md.
 
 // Enable this feature if all enabled endstop pins are interrupt-capable.
 // This will remove the need to poll the interrupt pins, saving many CPU cycles.

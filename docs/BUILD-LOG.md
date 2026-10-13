@@ -305,7 +305,7 @@ Who can answer:           [user, at the printer] — this is a physical fact abo
 
 - `Z_MIN_PROBE_PIN` override (pins file + Configuration.h) — intentional per §5.1/§5.2.
 - `FIL_RUNOUT_PIN` disabled — intentional per §5.1.
-- `Z_MIN_PROBE_ENDSTOP_INVERTING` — **superseded 2026-10-04, now `false`** (this line originally said "true — unverified, left as-is," which is stale; see master brief §7 and commit `386ae5b`). Re-verify with `M119` on the exact binary in hand before trusting this note.
+- `Z_MIN_PROBE_ENDSTOP_INVERTING` — **superseded again 2026-10-13, now `true`** (was flipped to `false` on 2026-10-04; that flip is now itself reversed — see "Physical test round — build 35c7404" below). Re-verify with `M119` on the exact binary in hand before trusting this note.
 - `NOZZLE_TO_PROBE_OFFSET { -27, 0, 0 }` — unverified magnitude per §7, left as-is.
 - E-steps `140` — uncalibrated per §7, left as-is.
 - `INVERT_X_DIR` / `INVERT_E0_DIR` set to `true` — unverified per §7, left as-is; only physical jog/extrude test can resolve.
@@ -335,3 +335,82 @@ Corrected a real mistake: the build-identity work claimed "M115 proves what's fl
 Per explicit PM direction relayed through Codex (coordination/firmware D005): merged PR #7 (`abc106c`) then PR #8 (`a9353fc`) into `claude/master-brief-review-rabxqg` via the normal GitHub merge flow. PR #8 hit a real merge conflict against the newly-merged #7 (both PRs appended a new section to this file at the same spot) — Codex resolved it independently (commit `5f40a7b`, verified sound: both sections preserved, 58/58 baseline checks still pass) before I could push my own equivalent resolution; adopted Codex's rather than duplicating or force-pushing over it. `firmware-regression` CI ran and passed on PR #8 once the merge brought `regression-checks.yml` in. Integration branch tip is now `a9353fc` — this is the one agreed combined candidate per the coordination channel.
 
 Added `TEST-SCRIPTS/COMPONENT-CHECK.md` (branch `claude/add-component-check`, focused documentation PR, not a wholesale merge of `coordination/firmware`) — the sheet jointly reviewed by both Claude and Codex (D001–D005), including the idle/busy emergency-stop split I'd requested and Codex implemented in D004. Verified by reading the actual file content pulled from the coordination branch, not just trusting the message describing it.
+
+## Physical test round — build 35c7404 (2026-10-13)
+
+First real printer test of the combined-candidate build. Owner flashed
+`firmware-main.bin` (commit `35c7404`) via the mainboard's SD slot (confirmed
+the file renamed off `firmware.bin` after a power cycle — genuine flash, not
+a no-op) and ran `MAIN-BUILD-QUICKCHECK.md` over the TFT's gcode console and
+menus, reporting results with raw printer output per test (`M105`/`M119`
+text, photos of the TFT screen), not paraphrased summaries. Recorded here and
+in `TEST-SCRIPTS/regression-runs/MAIN-BUILD-QUICKCHECK.md` directly (owner
+filled it in at the printer; this is the permanent run record for this
+build, per `TEST-SCRIPTS/README.md`'s model — not overwriting any prior run).
+
+**Results:**
+- **Hotend heat — FAIL.** `M104 S50` accepted; `M105` showed `T:` flat at
+  ~22.1-22.4°C across multiple polls (no climb at all) until Marlin's
+  thermal-protection watchdog tripped: `Error:Heating failed, system
+  stopped! Heater_ID: E0` → `Printer halted. kill() called!` →
+  `//action:poweroff`. The watchdog did its job correctly; the underlying
+  defect is that the hotend heater produces no measurable temperature
+  response to a commanded output.
+- **Bed heat — FAIL.** `M140 S40` (console) and the TFT's Heat→Hotbed menu
+  (target set to 60°C) both accepted the command; `B:` stayed flat at
+  ~22.6-22.8°C with no climb in either case. Confirmed two independent ways
+  (console and menu), same symptom as the hotend.
+- **FAN0 (parts cooling) — FAIL.** `M106 S255` and the TFT's Fan menu
+  (F0 100/100) both accepted the command; fan did not spin either way.
+- **FAN2 (controller fan, auto) — PASS.** `M17` (enable motors) correctly
+  triggered FAN2 to spin; `M84` (disable) correctly let it stop after its
+  off-delay. This is a useful negative control: it confirms 24V input power
+  is reaching the board, and that the firmware's auto-fan trigger logic and
+  at least one MOSFET-driven output both work correctly — the three failures
+  above are not "nothing on this board works."
+- **Z-probe polarity — FAIL, root cause identified and fixed (see below).**
+- **Z-direction jog, X/Y homing** — inconclusive from this round; the
+  owner's notes didn't unambiguously record which way the Z jog moved, and
+  further homing was correctly held back once the probe fault was found.
+  Needs a clean re-run once the probe fix is confirmed on a new build.
+
+**Z-probe polarity — root cause and fix.** `M119` was checked both ways,
+using the probe's own onboard LED as an independent ground-truth indicator
+(not just trusting Marlin's report against itself):
+- Probe physically released, nothing near it: `M119` reported
+  `z_probe: TRIGGERED`.
+- Probe physically blocked with metal, probe's own LED lit confirming it
+  detected the target: `M119` reported `z_probe: open`.
+
+That's inverted both directions — exactly backwards from what
+`Z_MIN_PROBE_ENDSTOP_INVERTING false` (set 2026-10-04, see above) should
+produce, and backwards from what that 2026-10-04 change was supposed to have
+fixed. This directly contradicts the prior entry's "confirmed by user"
+history; the new test is more rigorous (independent LED ground truth,
+repeated, photographed) so it's trusted as current. **Fixed:**
+`Marlin/Configuration.h:1151` `Z_MIN_PROBE_ENDSTOP_INVERTING` `false` → `true`
+(back to its pre-2026-10-04 value). This is a safety-critical setting — an
+inverted probe reading false before this fix would make Marlin think the
+probe is already triggered before `G28 Z` even starts, which (consistent
+with what the owner's Z-home photos show — the gantry stayed up near the top
+of the frame rather than traveling down to the bed) most likely caused
+homing to refuse/stop immediately rather than actually finding the bed. That
+appears to be what happened, not a crash, but it's not confirmed from here
+— needs the owner's direct account of what the Z-home attempt actually did,
+and should **not** be re-attempted again until the fix below is flashed and
+`M119` is re-verified clean both ways first.
+
+**Shared-cause note, not yet diagnosed further:** three independent
+mainboard outputs (HE0, HEATER_BED, FAN0) all failed to produce any
+real-world effect, while FAN2 (same board, same 24V rail family) worked
+correctly. Three independent MOSFET failures at once is possible but less
+likely than a single shared point of failure downstream of the mainboard —
+most plausibly something in the print-head/bed wiring harness affected by
+the reboard, since FAN2 proves the board itself and its firmware logic are
+not globally broken. This needs a multimeter check at the mainboard's HE0,
+BED, and FAN0 terminals (voltage present while each is commanded on) to
+localize it to "mainboard side" vs. "harness/connector side" before further
+firmware changes are considered — this is not something a firmware change
+can fix if it's a continuity problem.
+
+No GitHub Issues updated yet as part of this entry — next step.
