@@ -59,6 +59,17 @@ the 5 things that were flagged broken: fans, Z direction, Z probe, hotend
 heat, hotbed heat. Run this first on a new main build; run the full
 `TEST-CASES.md` suite afterward for everything else.
 
+## Component check (single combined candidate, joint Claude/Codex review)
+
+`COMPONENT-CHECK.md` is the sheet reviewed and agreed by both Claude and
+Codex (coordination/firmware, messages D001–D005) for the single combined
+integration-branch candidate, covering identity, host-protocol, emergency-stop
+(idle gated early, busy gated late behind motion/heat/homing), fans, probe,
+Z direction, and every previously-known-working component in one manually
+paced pass. Use this before `create_regression_run.py`'s full suite, not
+instead of it — all results start NOT RUN and nothing here is certified by a
+successful compile.
+
 ## Workflow for a new firmware build
 
 1. Generate a new run with `create_regression_run.py` using the verified artifact source commit and SHA256; see `regression-runs/TEMPLATE.md` for the command. The generator refuses to overwrite existing results.
