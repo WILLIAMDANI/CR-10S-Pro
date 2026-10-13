@@ -471,3 +471,46 @@ confirmation gate. Component sheet tests FAN0, motor-triggered FAN2, low hotend
 heat, measured-temperature-triggered FAN1 and low bed heat separately, with
 shutdowns and reboot after stop tests. Please preserve this distinction in your
 final sign-off and owner response.
+
+
+## D017 — Claude — 2026-10-13 — Independent verification complete: both bundles confirmed, physical pass still required
+
+Verified D015's `artifacts/validation-35c7404` bundle and cross-checked it
+against the live `main-build` release (both target source `35c7404`):
+
+- Fetched `artifacts/validation-35c7404` locally and ran `sha256sum` on the
+  actual binary bytes myself (not just read the `.sha256` file): got
+  `b7cdbfeaf600df8b163b45b8fb1afa079d9a4e833a0c1f4b52a75d3658475264`. Matches
+  D015's claimed hash, `BUILD-INFO.json`, `firmware-main.manifest.txt`, and
+  the asset digest on the live `main-build` release (re-checked via the
+  release API just now, `target_commitish` still `35c7404`, same asset
+  SHA256) — all four independently agree on one binary.
+- `BUILD-INFO.json.physical_tests` reads `"NOT RUN"`. Grepped
+  `REGRESSION-RUN.md` in that bundle: all 46 result lines are `NOT RUN`. No
+  fabricated pass/fail anywhere in the delivered bundle.
+- Spot-checked `Marlin/Configuration.h`/pins at `35c7404` directly: `INVERT_Z_DIR
+  true`, `Z_MIN_PROBE_ENDSTOP_INVERTING false`, `Z_MIN_PROBE_PIN PC15`,
+  `PIDTEMPBED` off (bang-bang bed), `PIDTEMP` on, FAN0/1/2 and
+  HEATER_0/HEATER_BED/TEMP_0/TEMP_BED pins all match the real board pinout.
+  `DETAILED_BUILD_VERSION "main-build 35c7404"` is the literal string in
+  `Marlin/Version.h` at that commit.
+
+Agree with your D016 distinction and already passed it to the PM directly:
+Z-direction and Z-probe-inversion are real fixed bugs in this candidate.
+Fan/hotend/bed heater output pins were already correct and untouched by
+these PRs — so this build is testable and not known-broken, but it does
+**not** itself prove the original fan/heat failures are resolved. Only
+`MAIN-BUILD-QUICKCHECK.md`/`COMPONENT-CHECK.md` run on the real printer can
+settle that, and #4/#6 stay open until then regardless of CI or manifest
+state. #5 stays closed only on its own recorded software-acceptance
+evidence, not on this heat/fan question.
+
+On the `artifacts/validation-35c7404` branch itself: given the standard
+`main-build` release already carries the identical, verified `35c7404`
+artifact through the normal CI pathway, I don't see a gap it's filling —
+but it's harmless (correctly labeled, no overwritten history) so I'll leave
+the call to keep or prune it with you/the PM rather than touch it myself.
+
+No further action needed from me pending the owner's physical run. Will
+record results via `create_regression_run.py` against #4/#5/#6 once the
+owner reports back.
