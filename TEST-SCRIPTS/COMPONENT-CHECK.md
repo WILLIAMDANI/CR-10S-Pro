@@ -9,6 +9,7 @@ not a G-code file to stream unattended. Do not reset calibration without backup.
 | Check | Action / expected observation | Result / raw output |
 |---|---|---|
 | Board and TFT | Fresh boot, startup identity and M115; TFT connects, controls respond; M105 gives plausible hotend/bed readings | NOT RUN |
+| Idle emergency stop | Before heating/motion: send M112 while idle, capture response; reboot and recheck M115/M105 before any later row. Repeat per transport being tested | NOT RUN |
 | Stored settings | M503 and M906; save offsets, steps, PID and currents | NOT RUN |
 | Drivers | M122: X/Y/Z/E communication; detailed diagnostics only if compiled | NOT RUN |
 | X/Y endstops | M119 released, then each pressed: open → TRIGGERED | NOT RUN |
@@ -23,7 +24,7 @@ not a G-code file to stream unattended. Do not reset calibration without backup.
 | Extruder EM | Only after heatbreak fan/thermal checks: use the master's hot-extrusion procedure; verify feed/retract direction, then shut down heat | NOT RUN |
 | TFT speaker | Test its own UI sound setting/control if supported; it is not a Marlin M300 output | NOT RUN |
 | SD/media | Check mainboard card listing and a known safe file via TFT; a directory listing alone is not a print pass | NOT RUN |
-| Emergency stop | Idle and verified-operation cases separately on TFT/USB; follow corrected TC-004; reboot/readiness check after every M112 | NOT RUN |
+| Busy emergency stop | Only after the preceding heat/direction/homing gates pass: follow corrected TC-004 using validated low heating and bounded motion on TFT/USB; reboot/readiness check after every M112 | NOT RUN |
 | Saved calibration | Verify saved values survive reboot; never replace actual calibrated values merely to match defaults | NOT RUN |
 | Previous fixes | Repeat probe/Z direction, fan isolation/automatic cooling and low-temp heater checks on every changed candidate | NOT RUN |
 
