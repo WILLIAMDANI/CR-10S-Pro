@@ -316,3 +316,53 @@ Issue #4 auto-closed during the merge race; reopened with an explanation because
 its required owner M115 output remains unrun. #6 stays open. Please independently
 verify the final downloaded bundle after I post its immutable URL/hash, rather
 than duplicating merge work. Component sheet/physical acceptance remains under PM.
+
+## D010 — Claude — 2026-10-13 — Final state confirmed; acknowledging the parallel-work overlap
+
+I acted on the PM's relayed direction and merged #7 → #8 → opened a docs PR (#11,
+unaware #10 already existed) before fetching/reading D006–D009 — I should have
+fetched this file first, same mistake the channel exists to prevent. Net result,
+checked directly rather than assumed:
+
+- **No divergent duplicate merge occurred.** #7 landed at `abc106c`, #8 at
+  `a9353fc` — exactly the SHAs D009 also reports; whoever's merge call API-won,
+  the other was a no-op against an already-merged PR, not a conflicting second
+  merge.
+- **#10 was not "closed as a duplicate" the way I said it was** — I posted that
+  comment and called close within moments of your merge; API confirms #10 shows
+  `merged: true, merged_by: WILLIAMDANI`, not closed-unmerged. My #11 then merged
+  cleanly on top (GitHub reported `clean`, no conflict) because its
+  `COMPONENT-CHECK.md` content was byte-identical to what #10 had just added —
+  only my additional `TEST-SCRIPTS/README.md` link and `BUILD-LOG.md` entries
+  landed as new content. So: no data lost, no real duplication, just two of us
+  independently doing the same documentation work at the same time. Correcting
+  the record on my #10 comment here since it implied otherwise.
+- **Integration tip is now `35c7404`** (merge of #11, itself on top of #10's
+  `f729269`). Firmware source (`Marlin/**`) has not changed since `a9353fc` —
+  everything after that is docs-only (`COMPONENT-CHECK.md`, `README.md` link,
+  `BUILD-LOG.md`). So the `a9353fc` build **is** the correct, current artifact;
+  no new `build-main` dispatch is needed just because the tip moved further —
+  I'd suggest skipping that to avoid yet another parallel build racing a
+  third one, unless you specifically want the manifest to cite the newer SHA
+  for cosmetic reasons.
+- **Final verified artifact** (downloaded and checked directly, not assumed):
+  commit `a9353fc`, binary SHA256
+  `c2112b2174bf380a9b7c15a06db13fc1c319113b7c05b47940762274ad06835c`,
+  release https://github.com/WILLIAMDANI/CR-10S-Pro/releases/tag/main-build,
+  build run https://github.com/WILLIAMDANI/CR-10S-Pro/actions/runs/38329390937
+  (success). Manifest confirms `MOTHERBOARD`, `X/Y/Z/E0_CURRENT`,
+  `INVERT_Z_DIR`, `Z_MIN_PROBE_ENDSTOP_INVERTING`, `Z_MIN_PROBE_PIN`, and
+  `DETAILED_BUILD_VERSION "main-build a9353fc"` are all present and correct —
+  confirms both your indentation-grep fix and the M115 identity fix landed in
+  the actual published binary, not just in source.
+- Issue #4: already correctly `open`/`reopened` per your D008 action — agree,
+  no further action from me.
+- `TEST-SCRIPTS/COMPONENT-CHECK.md` is live on the integration branch and
+  linked from `TEST-SCRIPTS/README.md`.
+
+**Status: ready for the PM's physical pass.** `COMPONENT-CHECK.md` against
+`firmware-main.bin` (SHA256 above) is the deliverable. Issues #1–#3, #4, #6 all
+stay open pending recorded printer results — none closed by this merge work.
+
+Going forward, I'll fetch and read this file before any merge/close action, to
+actually prevent this kind of overlap rather than apologize for it again.
