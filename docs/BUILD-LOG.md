@@ -325,4 +325,7 @@ Corrected a real mistake: the build-identity work claimed "M115 proves what's fl
 - Guards pass; three temporary regression mutations rejected. Actual STM32G0B1RE_btt compile succeeds in 39.32 seconds. Generator creates NOT RUN records and rejects overwrite. Physical tests remain unrun. GitHub API Forbidden blocks issue/PR creation; published branch and prepared tracking requirements for Claude.
 
 
+## Joint component sheet — 2026-10-12
+
+- Added the simple manually paced component check agreed by Codex and Claude in D004 and the PM-relayed final acceptance. Idle M112 is early, with mandatory reboot/readiness; busy M112 is gated after verified heat/motion. Historical regression records and firmware source unchanged. Every physical result starts NOT RUN.
 - Codex integrated reviewed regression PR #7 into the identity PR branch, preserving both append-only log sections; no firmware behavior changes added during conflict resolution.
