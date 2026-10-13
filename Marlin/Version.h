@@ -34,7 +34,7 @@
  * Verbose version identifier which should contain a reference to the location
  * from where the binary was downloaded or the source code was compiled.
  */
-//#define DETAILED_BUILD_VERSION SHORT_BUILD_VERSION
+#define DETAILED_BUILD_VERSION "unbuilt-source" // CI overwrites this placeholder with the real short commit SHA before compiling -- see .github/workflows/build-main.yml and build-firmware.yml. A binary carrying this literal string was never built by CI.
 
 /**
  * The STRING_DISTRIBUTION_DATE represents when the binary file was built,
