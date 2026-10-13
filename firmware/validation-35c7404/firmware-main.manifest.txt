@@ -1,0 +1,21 @@
+commit: 35c74044828af093f8753d5fa3f2a26c43955ac9
+short_sha: 35c7404
+built_at: 2026-10-13T01:01:36Z
+platformio_version: 6.1.19
+sha256: b7cdbfeaf600df8b163b45b8fb1afa079d9a4e833a0c1f4b52a75d3658475264
+--- key config values ---
+Marlin/Configuration.h:  #define MOTHERBOARD BOARD_BTT_SKR_MINI_E3_V3_0
+Marlin/Configuration.h:#define SERIAL_PORT 2 // UART2 (PA2/PA3) = the TFT connector on this board, per pins_BTT_SKR_MINI_E3_V3_0.h -- this is how Marlin talks to the touchscreen
+Marlin/Configuration.h:#define BAUDRATE 115200 // Matches BTT's standard mainboard<->TFT pairing speed
+Marlin/Configuration.h:#define Z_MIN_PROBE_ENDSTOP_INVERTING false // Flipped 2026-10-04: physical test showed probe logic backwards (confirmed by user) -- was true.
+Marlin/Configuration.h:#define Z_MIN_PROBE_PIN PC15 // E0-STOP -- matches the override in pins_BTT_SKR_MINI_E3_V3_0.h
+Marlin/Configuration.h:#define INVERT_X_DIR true // Confirmed 2026-10-03: +X jog moves away from the X endstop, as expected.
+Marlin/Configuration.h:#define INVERT_Z_DIR true // Flipped 2026-10-04: physical test showed Z homing drove the wrong way (confirmed by user) -- was false.
+Marlin/Configuration.h:#define INVERT_E0_DIR true // STARTING GUESS -- verify once hotend is hot: a small +E move must push filament toward the nozzle, not retract. Flip if backwards.
+Marlin/Configuration_adv.h:#define EMERGENCY_PARSER // Enabled per Codex review finding 2 and BTT TFT host-dialog requirement; intercepts M108/M112/M410/M876 in the receive path even during blocking operations
+Marlin/Configuration_adv.h:    #define X_CURRENT       800        // (mA) RMS current. Multiply by 1.414 for peak current.
+Marlin/Configuration_adv.h:    #define Y_CURRENT       800
+Marlin/Configuration_adv.h:    #define Z_CURRENT       1000 // Bumped up from the 800 default: both Z motors are wired in parallel off this single driver, so each motor gets roughly half the set current. Tune with M906 -- listen/feel for excess heat and check for skipped steps.
+Marlin/Configuration_adv.h:    #define E0_CURRENT      800
+Marlin/Version.h:#define DETAILED_BUILD_VERSION "main-build 35c7404" // injected by build-main.yml -- this is what M115 actually reports
+Marlin/src/pins/stm32g0/pins_BTT_SKR_MINI_E3_V3_0.h:#define Z_MIN_PROBE_PIN                     PC15  // E0-STOP (repurposed for fixed inductive Z-probe)

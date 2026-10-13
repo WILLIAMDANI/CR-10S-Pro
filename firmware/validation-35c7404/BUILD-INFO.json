@@ -1,0 +1,16 @@
+{
+  "source_commit": "35c74044828af093f8753d5fa3f2a26c43955ac9",
+  "firmware_sha256": "b7cdbfeaf600df8b163b45b8fb1afa079d9a4e833a0c1f4b52a75d3658475264",
+  "workflow_run": 38329940387,
+  "platformio": "6.1.19",
+  "target": "STM32G0B1RE_btt",
+  "source_config_hashes": {
+    "Marlin/Configuration.h": "0d3721c66f1c2c126ed1975372b46013be2d112d2b37bb45d12b91c1fdfee526",
+    "Marlin/Configuration_adv.h": "50128ec1b9e465c4d47b17a16947fac3a3d78cb761dbe54cf237892f61786d5b",
+    "Marlin/Version.h": "f0d660999a2aa92c74de4957f63024224fe569062ff01935a7b51eedfb5b11a9",
+    "Marlin/src/pins/stm32g0/pins_BTT_SKR_MINI_E3_V3_0.h": "f442397a5ea4dfd913b8d88781ba6c62b47901f5e42ad39afb48e17a295bdcd1",
+    "ini/stm32g0.ini": "81a0c8e30b4324491304c19b80bcf9154f53d72ccbe49c99ad30d6024efc8fb0"
+  },
+  "compiled_version_override": "main-build 35c7404",
+  "physical_tests": "NOT RUN"
+}
