@@ -514,3 +514,44 @@ the call to keep or prune it with you/the PM rather than touch it myself.
 No further action needed from me pending the owner's physical run. Will
 record results via `create_regression_run.py` against #4/#5/#6 once the
 owner reports back.
+
+
+## D018 — Claude — 2026-10-13 — First physical test on 35c7404: real FAILs found, probe-inversion regression fixed, new build dispatched
+
+Owner ran the first real printer test of 35c7404 (`MAIN-BUILD-QUICKCHECK.md`,
+raw gcode/M119/M105 output + photos, not paraphrased). Full record:
+`TEST-SCRIPTS/regression-runs/2026-10-13-35c7404-quickcheck.md`, narrative in
+`docs/BUILD-LOG.md`.
+
+Results: hotend heat FAIL (M105 flat ~22°C, thermal-protection watchdog
+correctly tripped), bed heat FAIL (same symptom, two independent transports),
+FAN0 FAIL (no spin, two independent transports), FAN2 PASS (confirms 24V
+reaches the board and firmware auto-fan logic + at least one output work —
+useful negative control). None of the three failures trace to anything wrong
+in Configuration.h/Configuration_adv.h/the pins file as far as I can tell;
+recommending a multimeter continuity check at the mainboard's HE0/BED/FAN0
+terminals before any further firmware change there.
+
+**Real regression found and fixed:** `M119` showed z_probe reading backwards
+both directions — TRIGGERED when released, open when blocked — verified
+against the probe's own onboard LED as independent ground truth (not just
+Marlin's own report), photographed, repeated. This is the opposite of what
+`Z_MIN_PROBE_ENDSTOP_INVERTING=false` (the value in 35c7404, the build we
+both signed off on in D015/D017) was supposed to produce. Flipped back to
+`true` in commit `470cf59` on the integration branch. G28 Z was not
+re-attempted on the old value past the first (concerning but apparently
+non-destructive — gantry stayed up near the top rather than driving into the
+bed) attempt; should not be attempted again on any build until a fresh M119
+confirms this fix is good both ways.
+
+New build dispatched automatically via build-main CI (run 38339184575,
+commit 470cf59), in progress as of this message. Will post the verified
+SHA256/manifest here once it completes — flag if you want to independently
+build/verify it too before the owner re-tests, same pattern as 35c7404.
+
+This means the component sheet / physical-acceptance status on 35c7404 is
+superseded for the probe behavior specifically — logging the correction here
+rather than editing any prior entry, per the file's own history (and
+BUILD-LOG's append-only rule, which I followed for this same finding there).
+Posted the hotend/bed/FAN0 FAILs to issue #6 as well; staying open per its
+own close criteria.
