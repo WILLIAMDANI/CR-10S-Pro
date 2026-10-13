@@ -59,8 +59,13 @@ jobs:
 
       - name: Verify the identity string is actually in the compiled binary
         run: |
-          strings .pio/build/STM32G0B1RE_btt/firmware.bin | grep -F "main-build ${SHORT_SHA}" \
-            || { echo "FIRMWARE_NAME identity string not found in compiled binary -- refusing to publish"; exit 1; }
+          # Match the exact concatenated M115 FIRMWARE_NAME string (M115.cpp:
+          # "FIRMWARE_NAME:Marlin" " " DETAILED_BUILD_VERSION " (" ...), not just
+          # any occurrence of the SHA substring somewhere in the binary -- per
+          # Codex review (coordination/firmware, C001-A): anchor to the field
+          # M115 actually reports, not an unrelated embedded string.
+          strings .pio/build/STM32G0B1RE_btt/firmware.bin | grep -F "FIRMWARE_NAME:Marlin main-build ${SHORT_SHA} (" \
+            || { echo "M115's FIRMWARE_NAME line does not contain the expected build identity -- refusing to publish"; exit 1; }
 
       - name: Prepare artifact, hash, and manifest
         run: |
@@ -111,11 +116,32 @@ jobs:
           # Allowlist of names this workflow used to publish before the fixed-filename
           # change -- deliberately NOT "anything that isn't today's 3 files", since that
           # would also delete an unrelated asset someone else added to this release.
-          gh release view main-build --repo "${{ github.repository }}" --json assets \
-            --jq '.assets[].name' 2>/dev/null | grep -E '^firmware-main-[0-9a-f]+\.bin$' | while read -r name; do
-            echo "Deleting known-obsolete asset: $name"
-            gh release delete-asset main-build "$name" --repo "${{ github.repository }}" --yes || true
-          done
+          #
+          # Reviewed by Codex (coordination/firmware, C001-A / D002): the previous
+          # version piped through `grep -E ... | while read`, which under GitHub's
+          # default `bash -eo pipefail` fails the whole step whenever there are zero
+          # obsolete assets to clean up -- the common case once this cleanup has
+          # already run once. Matching inside the loop with bash `=~` instead avoids
+          # putting a possibly-zero-match grep in the pipeline. The initial fetch's
+          # real errors are no longer silently discarded via `2>/dev/null`; only the
+          # expected "release doesn't exist yet" case is treated as non-fatal.
+          if ! asset_json=$(gh release view main-build --repo "${{ github.repository }}" --json assets 2>&1); then
+            if echo "$asset_json" | grep -qi "release not found"; then
+              echo "No main-build release yet -- nothing to clean up."
+              exit 0
+            fi
+            echo "Failed to fetch main-build release assets:"
+            echo "$asset_json"
+            exit 1
+          fi
+          asset_names=$(echo "$asset_json" | jq -r '.assets[].name')
+          while IFS= read -r name; do
+            [ -z "$name" ] && continue
+            if [[ "$name" =~ ^firmware-main-[0-9a-f]+\.bin$ ]]; then
+              echo "Deleting known-obsolete asset: $name"
+              gh release delete-asset main-build "$name" --repo "${{ github.repository }}" --yes || true
+            fi
+          done <<< "$asset_names"
 
       - name: Publish/update main-build release
         if: env.SKIP_PUBLISH != '1'
