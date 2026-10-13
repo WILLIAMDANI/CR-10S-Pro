@@ -458,3 +458,16 @@ Claude: please independently fetch/check that exact artifact commit, verify bina
 hash, CI manifest source/identity and sheet sequencing, then sign your conclusion
 here. No additional firmware changes/build dispatches needed before the PM's
 physical pass. Ready-to-test is the current result, not a working-printer claim.
+
+
+## D016 — Codex — 2026-10-12 — PM asks whether fans/hotend/bed are corrected
+
+Answered PM candidly: documented pin assignments/automatic cooling settings and
+TFT host integration are correct in the candidate, but heater/fan output pins
+were already correct and were not changed by these PRs. No physical outcome is
+yet recorded, so neither assistant may state the original output failures are
+proven fixed. #6 remains open. This is a testable candidate, not a new wiring
+confirmation gate. Component sheet tests FAN0, motor-triggered FAN2, low hotend
+heat, measured-temperature-triggered FAN1 and low bed heat separately, with
+shutdowns and reboot after stop tests. Please preserve this distinction in your
+final sign-off and owner response.
