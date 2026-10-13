@@ -5,13 +5,16 @@ name: build-main
 # PlatformIO on GitHub's own runners -- this sandbox can't reach the
 # PlatformIO registry, GitHub Actions can.
 #
-# Build identity (Codex review finding 7, 2026-10-10): embeds the exact
-# commit SHA into the firmware's own version string (so M115 proves what's
-# actually flashed, not just a compile date), pins the PlatformIO version
-# instead of always installing latest, publishes a SHA256 + config manifest
-# alongside the binary, and uses a fixed filename + explicit target_commitish
-# so the release doesn't accumulate stale same-purpose assets under
-# different names every push.
+# Build identity (Codex review finding 7, 2026-10-10; corrected again per
+# issue #4, 2026-10-11): embeds the exact commit SHA into DETAILED_BUILD_VERSION
+# via Marlin/Version.h (Marlin's own supported CUSTOM_VERSION_FILE mechanism),
+# which M115.cpp actually reads -- the first version of this patched
+# STRING_CONFIG_H_AUTHOR instead, which only shows in the startup banner, NOT
+# in the M115 response itself. Pins the PlatformIO version instead of always
+# installing latest, publishes a SHA256 + config manifest (now capturing
+# indented declarations too) alongside the binary, and uses a fixed filename +
+# explicit target_commitish so the release doesn't accumulate stale
+# same-purpose assets under different names every push.
 
 on:
   workflow_dispatch:
@@ -26,6 +29,10 @@ on:
 
 permissions:
   contents: write
+
+concurrency:
+  group: build-main-release
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -43,11 +50,22 @@ jobs:
       - name: Embed commit SHA in firmware version string
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
-          sed -i "s|#define STRING_CONFIG_H_AUTHOR .*|#define STRING_CONFIG_H_AUTHOR \"main-build ${SHORT_SHA}\" // injected by build-main.yml|" Marlin/Configuration.h
+          sed -i "s|#define DETAILED_BUILD_VERSION .*|#define DETAILED_BUILD_VERSION \"main-build ${SHORT_SHA}\" // injected by build-main.yml -- this is what M115 actually reports|" Marlin/Version.h
+          grep -q "CUSTOM_VERSION_FILE Version.h" Marlin/Configuration.h || { echo "CUSTOM_VERSION_FILE not enabled in Configuration.h -- Marlin/Version.h would be ignored"; exit 1; }
           echo "SHORT_SHA=${SHORT_SHA}" >> "$GITHUB_ENV"
 
       - name: Build STM32G0B1RE_btt
         run: pio run -e STM32G0B1RE_btt
+
+      - name: Verify the identity string is actually in the compiled binary
+        run: |
+          # Match the exact concatenated M115 FIRMWARE_NAME string (M115.cpp:
+          # "FIRMWARE_NAME:Marlin" " " DETAILED_BUILD_VERSION " (" ...), not just
+          # any occurrence of the SHA substring somewhere in the binary -- per
+          # Codex review (coordination/firmware, C001-A): anchor to the field
+          # M115 actually reports, not an unrelated embedded string.
+          strings .pio/build/STM32G0B1RE_btt/firmware.bin | grep -F "FIRMWARE_NAME:Marlin main-build ${SHORT_SHA} (" \
+            || { echo "M115's FIRMWARE_NAME line does not contain the expected build identity -- refusing to publish"; exit 1; }
 
       - name: Prepare artifact, hash, and manifest
         run: |
@@ -60,9 +78,16 @@ jobs:
             echo "platformio_version: 6.1.19"
             echo "sha256: $(cut -d' ' -f1 firmware-main.bin.sha256)"
             echo "--- key config values ---"
-            grep -E "^#define (MOTHERBOARD|SERIAL_PORT|BAUDRATE|INVERT_Z_DIR|INVERT_X_DIR|INVERT_E0_DIR|Z_MIN_PROBE_ENDSTOP_INVERTING|Z_MIN_PROBE_PIN|EMERGENCY_PARSER|Z_CURRENT|X_CURRENT|Y_CURRENT|E0_CURRENT)\b" Marlin/Configuration.h Marlin/Configuration_adv.h Marlin/src/pins/stm32g0/pins_BTT_SKR_MINI_E3_V3_0.h 2>/dev/null
+            # Note the leading \s* -- MOTHERBOARD and the per-axis *_CURRENT values are
+            # indented inside #ifndef/#if blocks; an unindented-only pattern silently
+            # missed them before (issue #4).
+            grep -E "^\s*#define (MOTHERBOARD|SERIAL_PORT|BAUDRATE|INVERT_Z_DIR|INVERT_X_DIR|INVERT_E0_DIR|Z_MIN_PROBE_ENDSTOP_INVERTING|Z_MIN_PROBE_PIN|EMERGENCY_PARSER|DETAILED_BUILD_VERSION|Z_CURRENT|X_CURRENT|Y_CURRENT|E0_CURRENT)\b" Marlin/Configuration.h Marlin/Configuration_adv.h Marlin/Version.h Marlin/src/pins/stm32g0/pins_BTT_SKR_MINI_E3_V3_0.h 2>/dev/null
           } > firmware-main.manifest.txt
           cat firmware-main.manifest.txt
+          echo "--- sanity: required fields present? ---"
+          for field in "commit:" "sha256:" "MOTHERBOARD" "DETAILED_BUILD_VERSION"; do
+            grep -q "$field" firmware-main.manifest.txt || { echo "Manifest missing required field: $field"; exit 1; }
+          done
 
       - uses: actions/upload-artifact@v4
         with:
@@ -73,22 +98,53 @@ jobs:
             firmware-main.manifest.txt
           retention-days: 90
 
-      - name: Remove stale assets from old naming scheme
+      - name: Refuse to publish an older commit over a newer one
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view main-build --repo "${{ github.repository }}" --json assets \
-            --jq '.assets[].name' 2>/dev/null | while read -r name; do
-            case "$name" in
-              firmware-main.bin|firmware-main.bin.sha256|firmware-main.manifest.txt) ;;
-              *)
-                echo "Deleting stale asset: $name"
-                gh release delete-asset main-build "$name" --repo "${{ github.repository }}" --yes || true
-                ;;
-            esac
-          done
+          LATEST=$(gh api "repos/${{ github.repository }}/commits/${{ github.ref_name }}" --jq '.sha')
+          if [ "$LATEST" != "${{ github.sha }}" ]; then
+            echo "Branch tip is now $LATEST, this run is for ${{ github.sha }} -- a newer push is already ahead, skipping publish so this run can't overwrite it."
+            echo "SKIP_PUBLISH=1" >> "$GITHUB_ENV"
+          fi
+
+      - name: Remove known-obsolete assets from the old naming scheme
+        if: env.SKIP_PUBLISH != '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Allowlist of names this workflow used to publish before the fixed-filename
+          # change -- deliberately NOT "anything that isn't today's 3 files", since that
+          # would also delete an unrelated asset someone else added to this release.
+          #
+          # Reviewed by Codex (coordination/firmware, C001-A / D002): the previous
+          # version piped through `grep -E ... | while read`, which under GitHub's
+          # default `bash -eo pipefail` fails the whole step whenever there are zero
+          # obsolete assets to clean up -- the common case once this cleanup has
+          # already run once. Matching inside the loop with bash `=~` instead avoids
+          # putting a possibly-zero-match grep in the pipeline. The initial fetch's
+          # real errors are no longer silently discarded via `2>/dev/null`; only the
+          # expected "release doesn't exist yet" case is treated as non-fatal.
+          if ! asset_json=$(gh release view main-build --repo "${{ github.repository }}" --json assets 2>&1); then
+            if echo "$asset_json" | grep -qi "release not found"; then
+              echo "No main-build release yet -- nothing to clean up."
+              exit 0
+            fi
+            echo "Failed to fetch main-build release assets:"
+            echo "$asset_json"
+            exit 1
+          fi
+          asset_names=$(echo "$asset_json" | jq -r '.assets[].name')
+          while IFS= read -r name; do
+            [ -z "$name" ] && continue
+            if [[ "$name" =~ ^firmware-main-[0-9a-f]+\.bin$ ]]; then
+              echo "Deleting known-obsolete asset: $name"
+              gh release delete-asset main-build "$name" --repo "${{ github.repository }}" --yes || true
+            fi
+          done <<< "$asset_names"
 
       - name: Publish/update main-build release
+        if: env.SKIP_PUBLISH != '1'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: main-build
@@ -101,6 +157,9 @@ jobs:
             push to main (fixed filenames, not SHA-suffixed) -- see firmware-main.manifest.txt for the exact
             commit/config a given download corresponds to; don't assume the release body alone proves it
             if the release page was viewed before this run finished.
+            The printer's actual `M115` response now carries this build's short SHA directly in its
+            FIRMWARE_NAME line (via DETAILED_BUILD_VERSION) -- verify it there on the real printer, not
+            just from this page or the binary's embedded strings.
           files: |
             firmware-main.bin
             firmware-main.bin.sha256
