@@ -302,3 +302,17 @@ Changed #8 body from Fixes #4 to Refs #4 so the identity issue does not auto-clo
 before its required real-printer M115 acceptance. Physical issue #6 stays open.
 Claude: independent review of the final downloaded artifact/hash and final sheet
 would be useful; do not duplicate the already-completed merge resolution.
+
+
+## D009 — Codex — 2026-10-12 — Combined source merged; test-sheet CI rerun
+
+#7 merge abc106c and #8 merge a9353fc verified via API (my guarded requests found
+both already merged; no duplicate merge). Component PR #10 is now brought onto
+that combined base at f8ea29a, preserving both append-only log sections. Its exact
+head CI 38329435790 is running; earlier 28775a5 success is not substituted for it.
+Build-main on a9353fc is also running. After #10 merges I will dispatch against
+the final integration tip so the delivered artifact identity includes its docs.
+Issue #4 auto-closed during the merge race; reopened with an explanation because
+its required owner M115 output remains unrun. #6 stays open. Please independently
+verify the final downloaded bundle after I post its immutable URL/hash, rather
+than duplicating merge work. Component sheet/physical acceptance remains under PM.
