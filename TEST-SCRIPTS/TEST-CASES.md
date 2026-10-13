@@ -58,7 +58,7 @@ are clear to run.
 **Area:** Safety | **Priority:** Critical — do this before any motion/heating test below.
 **Correction (Codex review finding 2 & 5, 2026-10-10):** `EMERGENCY_PARSER` is now enabled (see BUILD-LOG), so `M112` is intercepted on the receive path even during blocking moves/heating, on both UART2 (TFT) and USB. Test idle and busy separately, and **reboot after each** — this test case previously had no explicit mandatory reboot step, which let later tests run against a killed/halted board without anyone noticing.
 **Procedure, idle case:** Board idle (no motion, no heating). Send `M112`. Record the exact response/ack. Power-cycle or reset the board. Confirm fresh readiness with `M115` then `M105` before continuing.
-**Procedure, busy case:** Start a heater (`M104 S150`) and a long move, then send `M112` mid-move/mid-heat. Record the exact response and how fast heat/motion actually stopped (not just that a message appeared). Power-cycle or reset the board. Confirm fresh readiness with `M115` then `M105` before continuing.
+**Procedure, busy case:** BLOCKED until the low-temperature heater, direction, probe, endstop and homing checks pass on this exact artifact. Use a small move within established travel clearance and a previously validated low heating target; do not start an unbounded long move or jump to 150°C for this check. Send `M112` during the operation and record response and actual cessation. Test UART2 and USB separately. Reboot and recheck `M115`/`M105` after each attempt. The idle case can run first; complete the busy case only after these prerequisites, before printing.
 **Expected Result:** Heaters and motion cut immediately in both cases; firmware requires a reset/reboot before accepting further motion (it should not silently resume). A serial `M112` is a software stop, not a substitute for the physical power switch during commissioning — if it doesn't stop immediately, cut power.
 **Pass Criteria:** Immediate, total stop in both idle and busy cases; no motion or heat continues after; board needs a reboot to resume. **Fail Criteria:** Anything keeps running, or a subsequent command resumes motion/heat without a reset.
 **Mandatory next step:** Reboot and re-verify with `M115`/`M105` before running any later test case — do not continue testing against a board that was just killed.
@@ -276,7 +276,7 @@ Requires TC-022/023 passing first.
 ### TC-031 — Hotend sensor-disconnect protection (**do under supervision**)
 **Priority:** Critical, safety
 **Correction (Codex review finding 5, 2026-10-10):** Unplugging a thermistor during heating tests *sensor-disconnect/MINTEMP protection*, not thermal-runaway protection — these are different failure paths in Marlin and the old procedure/expected-result conflated them. Renamed and re-scoped accordingly. **Reboot after this test before continuing**, per TC-004's mandatory-reboot rule.
-**Procedure:** While hotend is heating toward a target with a valid sensor reading, briefly unplug the hotend thermistor connector, then reconnect.
+**Procedure:** DEFERRED pending a reviewed controlled fault-injection procedure or simulation. Do not unplug a connector during powered heating as part of this commissioning sheet. Record NOT RUN; this review does not establish sensor-disconnect protection behavior.
 **Expected:** Marlin halts the heater and reports a MINTEMP-class error (e.g. `Err: MINTEMP`) — the sensor reading goes out of range, which Marlin catches via `HEATER_0_MINTEMP`, not via the thermal-runaway watchdog.
 **Fail Criteria:** Heater keeps driving with no valid sensor feedback — this is a fire-safety-relevant failure, treat as highest severity.
 **Reboot required after this test.**
@@ -290,11 +290,11 @@ Requires TC-022/023 passing first.
 ### TC-031c — Sustained thermal-runaway watchdog (review only, do NOT induce on hardware)
 **Priority:** Informational
 **Why not a live test:** Actually triggering Marlin's `THERMAL_PROTECTION_PERIOD`/`HYSTERESIS` watchdog on real hardware means deliberately preventing a heater from reaching temperature while the sensor stays valid (e.g. physically decoupling the heater block) — an unsafe, fire-risk procedure to stage on purpose. Never disable thermal protection to force a pass, and never stage this fault physically.
-**What's actually validated:** `THERMAL_PROTECTION_HOTENDS`/`THERMAL_PROTECTION_BED` are enabled, and `THERMAL_PROTECTION_PERIOD`/`HYSTERESIS` match the values confirmed identical to the upstream/official references in the earlier audit (`docs/BUILD-LOG.md`). Treat that source-level confirmation as the validation for this path, not a live induced fault.
+**What's reviewed:** `THERMAL_PROTECTION_HOTENDS`/`THERMAL_PROTECTION_BED` declarations and configured timers/hysteresis. Matching source defaults is configuration review, not a demonstrated watchdog test. Keep behavioral validation NOT RUN until a controlled simulation or reviewed fault-injection test exercises the path and confirms its outcome. Never report source inspection as a physical PASS.
 
 ### TC-032 — Bed sensor-disconnect protection (**do under supervision**)
 **Priority:** Critical, safety — same test as TC-031, for the bed. **Reboot after this test before continuing.**
-**Procedure:** While the bed is heating toward a target with a valid sensor reading, briefly unplug the bed thermistor connector, then reconnect.
+**Procedure:** DEFERRED pending a reviewed controlled fault-injection procedure or simulation, as for TC-031. No live connector removal in this commissioning sheet. Record NOT RUN.
 **Expected:** Marlin halts the bed heater and reports a MINTEMP-class error.
 **Fail Criteria:** Bed heater keeps driving with no valid sensor feedback.
 **Reboot required after this test.**
