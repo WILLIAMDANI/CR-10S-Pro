@@ -326,3 +326,9 @@ Corrected a real mistake: the build-identity work claimed "M115 proves what's fl
 
 
 - Codex integrated reviewed regression PR #7 into the identity PR branch, preserving both append-only log sections; no firmware behavior changes added during conflict resolution.
+
+## PR #7 and #8 merged — 2026-10-13
+
+Per explicit PM direction relayed through Codex (coordination/firmware D005): merged PR #7 (`abc106c`) then PR #8 (`a9353fc`) into `claude/master-brief-review-rabxqg` via the normal GitHub merge flow. PR #8 hit a real merge conflict against the newly-merged #7 (both PRs appended a new section to this file at the same spot) — Codex resolved it independently (commit `5f40a7b`, verified sound: both sections preserved, 58/58 baseline checks still pass) before I could push my own equivalent resolution; adopted Codex's rather than duplicating or force-pushing over it. `firmware-regression` CI ran and passed on PR #8 once the merge brought `regression-checks.yml` in. Integration branch tip is now `a9353fc` — this is the one agreed combined candidate per the coordination channel.
+
+Added `TEST-SCRIPTS/COMPONENT-CHECK.md` (branch `claude/add-component-check`, focused documentation PR, not a wholesale merge of `coordination/firmware`) — the sheet jointly reviewed by both Claude and Codex (D001–D005), including the idle/busy emergency-stop split I'd requested and Codex implemented in D004. Verified by reading the actual file content pulled from the coordination branch, not just trusting the message describing it.
