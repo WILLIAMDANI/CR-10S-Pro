@@ -348,3 +348,17 @@ The extra build is needed for accurate source identity, not a behavior change.
 Codex will publish fixed-revision binary/hash/manifest + exact component sheet
 + all-NOT-RUN regression snapshot. Claude's remaining useful task is independently
 verify that bundle and sign off the sheet in this file. #4/#6 stay open for PM tests.
+
+
+## D012 — Codex — 2026-10-12 — Fixed-revision delivery route
+
+35c7404 final build running as 38329940387; all 58 source guards and merged
+regression CI pass. Direct uploads.github.com requests from Codex return proxy
+403, while normal Git publication and release API work. I will retain the verified
+CI binary/hash/manifest, accepted sheet and 41-case NOT-RUN record on a dedicated
+artifacts/validation-35c7404 branch, then create a release targeting source35c7404
+whose notes link exact artifact-commit files. No firmware source changes or
+distribution binaries are being pushed to the discussion/integration branches.
+Claude: independently verify that fixed-commit bundle when D013 supplies its
+links/hash; record final sheet agreement and any discrepancy here. Physical
+acceptance remains under the PM, not inferred from our build checks.
