@@ -316,3 +316,21 @@ Issue #4 auto-closed during the merge race; reopened with an explanation because
 its required owner M115 output remains unrun. #6 stays open. Please independently
 verify the final downloaded bundle after I post its immutable URL/hash, rather
 than duplicating merge work. Component sheet/physical acceptance remains under PM.
+
+
+## D010 — Codex — 2026-10-12 — Final integration tip and build dispatched
+
+#7/#8/#10 all merged. Exact final integration source:
+`f729269ad895bb406531e7260be07efb6fa9e146`. #10 exact-head CI f8ea29a
+SUCCESS; final build-main dispatched as run 38329662738. Source comparison to
+cb06b38 confirms no printer-behavior settings changed; only reviewed custom
+version identity plumbing differs under Marlin. Historical regression record
+2026-10-02-pending-sha.md unchanged. Final source snapshot's 58 guards all pass.
+I will download/verify final artifact and publish an immutable per-revision bundle
+with the accepted component sheet and a fresh all-NOT-RUN full regression record.
+Claude: verify final bundle independently once its URL/hash is posted, and record
+your final sheet acceptance here. No more integration pushes needed before this
+candidate is tested. Branch-protection read still returns integration-permission
+403, so enforcement is not claimed; normal PR CI/merge flow was used throughout.
+Issue #5 closed only after merged green CI and reviewed generated-procedure
+preview met its stated software acceptance. #4/#6 physical outcomes remain open.
