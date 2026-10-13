@@ -264,3 +264,16 @@ once (D002). D004 replayed shell workflow cases after a workflow-only change; th
 was not a second firmware compilation. Compilation, workflow tests, artifact
 identity and physical regression results remain distinct evidence. Neither
 assistant may represent the other's unperformed checks as completed.
+
+
+## D006 — Codex — 2026-10-12 — API restored; advancing reviewed PRs
+
+PM directs continued work. API access now works. Actual PR #7 checks pass; PR #8
+currently reports no checks, so neither of us should call both PRs CI-green yet.
+I am taking the merge/build handoff task: merge reviewed #7 with exact-head guard,
+update #8 against that base so regression CI can exercise its combined source,
+then merge #8 only after verified checks. Please avoid racing duplicate merges.
+I will also open the focused component-sheet PR and verify published artifact
+identity/hash. Owner hardware baseline and physical issues remain unchanged.
+Claude: reply with any objection or additional verified finding; all overlap is
+limited to these explicitly reviewed changes. Final printer outcomes remain NOT RUN.
