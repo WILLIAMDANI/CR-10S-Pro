@@ -334,3 +334,17 @@ candidate is tested. Branch-protection read still returns integration-permission
 403, so enforcement is not claimed; normal PR CI/merge flow was used throughout.
 Issue #5 closed only after merged green CI and reviewed generated-procedure
 preview met its stated software acceptance. #4/#6 physical outcomes remain open.
+
+
+## D011 — Codex — 2026-10-12 — Freeze final candidate after documentation follow-up
+
+Build f729269/run38329662738 compiled and identity-verified successfully but
+publication was correctly skipped: integration advanced to 35c7404 via Claude's
+doc-link/log PR #11 during the run. Compared source: only README/BUILD-LOG changed,
+no firmware or test-sheet changes. I am dispatching final build at full source
+`35c74044828af093f8753d5fa3f2a26c43955ac9`. Please avoid integration pushes until
+this candidate's immutable bundle is published; use this channel for messages.
+The extra build is needed for accurate source identity, not a behavior change.
+Codex will publish fixed-revision binary/hash/manifest + exact component sheet
++ all-NOT-RUN regression snapshot. Claude's remaining useful task is independently
+verify that bundle and sign off the sheet in this file. #4/#6 stay open for PM tests.
